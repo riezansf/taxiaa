@@ -320,7 +320,8 @@ $(document).ready(function() {
         success: function(data) {
             var drawPointOrigin=false;
             var drawPointDestination=false;
-            var mapOrigin=false;
+            
+            var mapOrigin=true;
             var mapDestination=true;
             
             var drawCentroidOrigin=false;    
@@ -330,21 +331,27 @@ $(document).ready(function() {
             var drawPointRadiusOrigin=10;
             
             var drawCentroidDestination=false;
-            var epsDestination=0.1;
+            var epsDestination=0.2;
             var minPtsDestination=2;
             var clusterColorDestination="green";
             var drawPointRadiusDestination=10;
             
-            
             var when="2015-12-25";
             
-            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize);
-                          
-            calculateCentroidOrigin(drawCentroidOrigin);    
-            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
-            
-            calculateCentroidDestination(drawCentroidDestination);    
-            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
+            //gridbased dbscan
+//            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize);
+//                          
+//            calculateCentroidOrigin(drawCentroidOrigin); 
+//            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
+//            
+//            calculateCentroidDestination(drawCentroidDestination);    
+//            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
+//        
+        
+            //dbscan
+            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,false,false,bandungBounds,gridSize);
+            dbscan(originPoint,0.2,5,clusterColorOrigin,10);
+            dbscan(destinationPoint,0.2,5,clusterColorDestination,10);
         
         }
     });
