@@ -1,31 +1,3 @@
-//setup map *bandung from gmaps -6.9106759,107.5857585 *from web -6.914744, 107.609810
-function setupMap(){
-    var map = L.map('map').setView([-6.914744, 107.609810], 13);
-    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-        maxZoom: 18,
-        id: 'laezano.18b09133',
-        accessToken: 'pk.eyJ1IjoibGFlemFubyIsImEiOiIxYzMzNmJmOTdjY2M4MmI5N2U2ZWI1ZjYyZTYyZGVmNCJ9.-VDDMhYojWz8ghvMftCkcw'
-    }).addTo(map);
-    
-    //lat = atas-bawah Y, makin kecil makin ke atas (utara)
-    //long = kiri-kanan X, makin kecil makin ke kiri (barat)
-    //atas-bawah = 14.23 KM , kiri-kanan=21.09 KM , diagonal=25.44 KM, luas=300.1107 KM
-    //0.001 point GPS = 109.5546875 Meter 
-    //Grid size (Meter) 10 / 25 / 50 / 100 / 200
-
-    //===== Draw Bandung Rectangle
-    var bounds = [[-6.839, 107.547], [-6.967, 107.738]]; //Bounds BANDUNG ONLY
-    //var bounds = [[-6.784, 107.493], [-7.057, 107.827]]; //Bounds include CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
-    L.rectangle(bounds, {color: "#ff7800", weight: 0.1, fillOpacity:0.01}).addTo(map);
-    map.fitBounds(bounds);
-}
-
-function drawBorder(){
-
-
-}
-
 //===== generate random color
 Array.prototype.getRandom= function(cut){
     var i= Math.floor(Math.random()*this.length);

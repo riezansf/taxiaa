@@ -3,6 +3,15 @@
     <meta charset=utf-8 />
     <title>AA Taksi Frequent O-D Pattern</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' /> 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script> 
+    <script src="leaflet/leaflet.js"></script>
+    <script src="Leaflet.label/Label.js"></script>
+    <script src="Leaflet.label/BaseMarkerMethods.js"></script>
+    <script src="Leaflet.label/Marker.Label.js"></script>
+    <script src="Leaflet.label/Map.Label.js"></script>
+    <script src="Leaflet.label/Path.Label.js"></script>
+    <script type="text/javascript" src="jDBSCAN/jDBSCAN.js"></script>
+    <script src="util.js"></script> 
     <link rel="stylesheet" href="leaflet/leaflet.css" />
     <style>
         body { margin:0; padding:0; }
@@ -20,21 +29,37 @@
             text-align: center;
         }
     </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>   
-    <script src="leaflet/leaflet.js"></script>
-    <script src="Leaflet.label/Label.js"></script>
-    <script src="Leaflet.label/BaseMarkerMethods.js"></script>
-    <script src="Leaflet.label/Marker.Label.js"></script>
-    <script src="Leaflet.label/Map.Label.js"></script>
-    <script src="Leaflet.label/Path.Label.js"></script>
-    <script type="text/javascript" src="jDBSCAN/jDBSCAN.js"></script>
-    <script src="util.js"></script> 
+  
+    
+   
     
 <script>
-//Var    
+    //lat = atas-bawah Y, makin kecil makin ke atas (utara)
+    //long = kiri-kanan X, makin kecil makin ke kiri (barat)
+    //atas-bawah = 14.23 KM , kiri-kanan=21.09 KM , diagonal=25.44 KM, luas=300.1107 KM
+    //0.001 point GPS = 109.5546875 Meter 
+    //Grid size (Meter) 10 / 25 / 50 / 100 / 200
+var map;
+var bandungCentroid=[-6.914744, 107.609810];
+var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
+var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
+  
+var allTextLines;    
     
-function buildMap(){
-    var map = L.map('map').setView([-6.914744, 107.609810], 13);
+var originPoint=[];
+var destinationPoint=[];
+
+var gridCountOrigin=[];
+var gridCountDestination=[]; 
+   
+var centroidOrigin=[];
+var centroidGridNumOrigin=[];
+    
+var centroidDestination=[];
+var centroidGridNumDestination=[];
+    
+function buildMap(bandungCentroid){
+    map = L.map('map').setView(bandungCentroid, 13);
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         maxZoom: 18,
@@ -43,138 +68,124 @@ function buildMap(){
     }).addTo(map);
 }    
 
-function drawBound(){
-    //lat = atas-bawah Y, makin kecil makin ke atas (utara)
-    //long = kiri-kanan X, makin kecil makin ke kiri (barat)
-    //atas-bawah = 14.23 KM , kiri-kanan=21.09 KM , diagonal=25.44 KM, luas=300.1107 KM
-    //0.001 point GPS = 109.5546875 Meter 
-    //Grid size (Meter) 10 / 25 / 50 / 100 / 200
-
-    //===== Draw Bandung Rectangle
-    var bounds = [[-6.839, 107.547], [-6.967, 107.738]]; //Bounds BANDUNG ONLY
-    //var bounds = [[-6.784, 107.493], [-7.057, 107.827]]; //Bounds include CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
-    L.rectangle(bounds, {color: "#ff7800", weight: 0.1, fillOpacity:0.01}).addTo(map);
-    map.fitBounds(bounds);
+function drawBound(bound,color,weight,fillOpacity){
+    L.rectangle(bound, {color: color, weight: weight, fillOpacity:fillOpacity}).addTo(map);
+    map.fitBounds(bound);
 }
 
-function drawGrid(){
-   //===== Draw Line to create GRID
+function drawGridLine(bounds,gridSize,weight,color){
     var gridCount=0;
     var row=0; var col=0;
-    for(var j=-6.839;j>=-6.967;j=(j-0.001).toFixed(12)){
-        var k=107.547; 
+    for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
+        var k=bounds[0][1]; 
         col=0;
-        while(k<107.738){
+        while(k<bounds[1][1]){
             //draw column
-            var polyline = L.polyline([new L.LatLng(-6.839,k),new L.LatLng(-6.967,k)], { color: 'grey', weight: 0.1 }).bindLabel("col "+col).addTo(map);
-            k=(k+0.001);
+            var polyline = L.polyline([new L.LatLng(bounds[0][0],k),new L.LatLng(bounds[1][0],k)], { color: color, weight: weight }).bindLabel("col "+col).addTo(map);
+            k=(k+gridSize);
             gridCount++;
             col++;
         }
         //draw row
-        var polyline = L.polyline([new L.LatLng(j,107.547),new L.LatLng(j,107.738)], { color: 'grey', weight: 0.1 }).bindLabel("row "+row).addTo(map);
+        var polyline = L.polyline([new L.LatLng(j,bounds[0][1]),new L.LatLng(j,bounds[1][1])], { color: color, weight: weight }).bindLabel("row "+row).addTo(map);
         row++;
     }
     console.log("Grid size = "+row+"x"+col);   
-
+}
+    
+function drawGridRectangle(){
     //==== TODO Draw Rectangle to create grid
     //label = new L.Label()
     //label.setContent("static label")
     //label.setLatLng(polygon.getBounds().getCenter())
     //map.showLabel(label); 
+    return;
 }
-    
-    
-$(document).ready(function() {
-    buildMap();
-    drawBound();
-    drawGrid();
-    
-    $.ajax({
-        type: "GET",
-        url: "argo_gps_join_12.csv",
-        dataType: "text",
-        success: function(data) {
-            processData(data);
+
+function mapPointToGridOrigin(lines,bounds,gridSize){
+    var row=0; var col=0;
+    for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
+        var k=bounds[0][1]; 
+        col=0;
+        if(gridCountOrigin[row]==null){gridCountOrigin[row]=[]}
+        while(k<bounds[1][1]){
+            //count grid origin
+            if(gridCountOrigin[row][col]==null){gridCountOrigin[row][col]=[];}
+            if( lines[8]>j && lines[8]<(j-gridSize).toFixed(12) && lines[9]>k && lines[9]<(k+gridSize)){
+                //console.log(originPoint.length+". "+lines[8]+","+lines[9]+" in grid "+row+","+col);
+                gridCountOrigin[row][col].push({location: { accuracy: 1, latitude: lines[8], longitude: lines[9] }});
+                break;
+            }
+            k=(k+gridSize);
+            col++;
         }
-    });
-});
+        row++;
+    }
+}    
     
-function processData(allText) {
-    var allTextLines = allText.split(/\r\n|\n/);
+function mapPointToGridDestination(lines,bounds,gridSize){
+    var row=0; var col=0;
+    for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
+        var k=bounds[0][1]; 
+        col=0;
+        if(gridCountDestination[row]==null){gridCountDestination[row]=[]}
+        while(k<bounds[1][1]){
+            //count grid destination
+            if(gridCountDestination[row][col]==null){gridCountDestination[row][col]=[];}
+            if( lines[14]>j && lines[14]<(j-gridSize).toFixed(12) && lines[15]>k && lines[15]<(k+gridSize)){
+                gridCountDestination[row][col].push({location: { accuracy: 1, latitude: lines[14], longitude: lines[15] }});
+                break;
+            }
+            k=(k+gridSize);
+            col++;
+        }
+        row++;
+    }
+}    
+    
+function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bounds,gridSize){
+    allTextLines = csv.split(/\r\n|\n/);
     var lines = [];
-    
-    var originPoint=[];
-    var destinationPoint=[];
-    
-    var countGridOrigin=[];
-    var countGridDestination=[];
-    
-    //===== Read data, Draw, & Count Grid
+
     var old_time = new Date();
     for (var i=0; i<allTextLines.length; i++) {
         var lines = allTextLines[i].split(',');
-        //lines[1]=="2015-12-25" && 
-        if(lines[1]=="2015-12-25" && lines[9]!="" && lines[14]!="" && lines[15]!="" && lines[8]!=null && lines[9]!=null && lines[14]!=null && lines[15]!=null){  //if coordinate !=""
+        
+        if(date==""){ var whereDate=true; }else{ var whereDate=date; }
+        
+        if(lines[1]==whereDate && lines[9]!="" && lines[14]!="" && lines[15]!="" && lines[8]!=null && lines[9]!=null && lines[14]!=null && lines[15]!=null){  //if coordinate !=""
+            
             originPoint.push({location: { accuracy: 1, latitude: lines[8], longitude: lines[9] }});
             destinationPoint.push({location: { accuracy: 1, latitude: lines[14], longitude: lines[15] }});
                         
-            //var circle = L.circle([lines[8], lines[9]], 5, { color: "red", fillColor: "red", fillOpacity: 1}).bindLabel(originPoint.length+". "+lines[8]+","+lines[9]).addTo(map);
-            
-            //count grid
-            var row=0; var col=0;
-            for(var j=-6.839;j>=-6.967;j=(j-0.001).toFixed(12)){
-                var k=107.547; 
-                col=0;
-                if(countGridOrigin[row]==null){countGridOrigin[row]=[]}
-                while(k<107.738){
-//                    //count grid origin
-//                    if(countGridOrigin[row][col]==null){countGridOrigin[row][col]=[];}
-//                    if( lines[8]>j && lines[8]<(j-0.001).toFixed(12) && lines[9]>k && lines[9]<(k+0.001)){
-//                        //console.log(originPoint.length+". "+lines[8]+","+lines[9]+" in grid "+row+","+col);
-//                        countGrid[row][col].push({location: { accuracy: 1, latitude: lines[8], longitude: lines[9] }});
-//                        break;
-//                    }
-                    
-                    //count grid destination
-                    if(countGridDestination[row][col]==null){countGridDestination[row][col]=[];}
-                    if( lines[14]>j && lines[14]<(j-0.001).toFixed(12) && lines[15]>k && lines[15]<(k+0.001)){
-                        countGridDestination[row][col].push({location: { accuracy: 1, latitude: lines[14], longitude: lines[15] }});
-                        break;
-                    }
-                    
-                    k=(k+0.001);
-                    col++;
-                }
-                row++;
+            if(drawPointOrigin){ //origin point color is blue
+                var circle = L.circle([lines[8], lines[9]], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(originPoint.length+". "+lines[8]+","+lines[9]).addTo(map);
             }
+            if(drawPointDestination){ //destination point color is green
+                var circle = L.circle([lines[14], lines[15]], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(destinationPoint.length+". "+lines[8]+","+lines[9]).addTo(map);
+            }
+            
+            if(mapOrigin){mapPointToGridOrigin(lines,bounds,gridSize);}
+            if(mapDestination){mapPointToGridDestination(lines,bounds,gridSize);}
         }
     }
     var new_time = new Date();
     console.log("Read data, Draw, & Count Grid = "+(new_time - old_time)+" ms");
+}
     
-    //==== Calculate center point (centroid) in each grid
-    var old_time = new Date();
-    var midPoint=[];
-    var midPointGrid=[];
-//    for(var i=0;i<countGridOrigin.length;i++){
-    for(var i=0;i<countGridDestination.length;i++){
-        midPointGrid[i]=[];
-//        for(var j=0;j<countGridOrigin[i].length;j++){     
-        for(var j=0;j<countGridDestination[i].length;j++){     
-//            if(countGridOrigin[i][j].length>1){
-            if(countGridDestination[i][j].length>1){
+function calculateCentroidOrigin(drawCentroid){
+    var old_time = new Date();;
+    for(var i=0;i<gridCountOrigin.length;i++){
+        centroidGridNumOrigin[i]=[];
+        for(var j=0;j<gridCountOrigin[i].length;j++){     
+            if(gridCountOrigin[i][j].length>1){
                 var latXTotal = 0;
                 var latYTotal = 0;
                 var lonDegreesTotal = 0;
-//                for(var k=0;k<countGridOrigin[i][j].length;k++){
-                for(var k=0;k<countGridDestination[i][j].length;k++){
-//                    var latDegrees = parseFloat(countGrid[i][j][k].location.latitude);
-//                    var lonDegrees = parseFloat(countGrid[i][j][k].location.longitude);
+                for(var k=0;k<gridCountOrigin[i][j].length;k++){
+                    var latDegrees = parseFloat(gridCountOrigin[i][j][k].location.latitude);
+                    var lonDegrees = parseFloat(gridCountOrigin[i][j][k].location.longitude);
                     
-                    var latDegrees = parseFloat(countGridDestination[i][j][k].location.latitude);
-                    var lonDegrees = parseFloat(countGridDestination[i][j][k].location.longitude);
-
                     var latRadians = Math.PI * latDegrees / 180;
                     latXTotal += Math.cos(latRadians);
                     latYTotal += Math.sin(latRadians);
@@ -183,94 +194,161 @@ function processData(allText) {
                 }
                 var finalLatRadians = Math.atan2(latYTotal, latXTotal);
                 var finalLatDegrees = finalLatRadians * 180 / Math.PI;
-                var finalLonDegrees = lonDegreesTotal / countGridDestination[i][j].length;
-//                var finalLonDegrees = lonDegreesTotal / countGrid[i][j].length;
+                var finalLonDegrees = lonDegreesTotal / gridCountOrigin[i][j].length;
             
-                midPoint.push({location: { accuracy: 1, latitude: finalLatDegrees, longitude: finalLonDegrees }});
-                midPointGrid[i][j]={location: { accuracy: 1, latitude: finalLatDegrees, longitude: finalLonDegrees }};
+                centroidOrigin.push({location: { accuracy: 1, latitude: finalLatDegrees, longitude: finalLonDegrees }});
+                centroidGridNumOrigin[i][j]={location: { accuracy: 1, latitude: finalLatDegrees, longitude: finalLonDegrees }};
                 
-                //console.log(i+","+j+" "+countGrid[i][j].length+" "+finalLatDegrees+","+finalLonDegrees);
-                //var circle = L.circle([finalLatDegrees, finalLonDegrees], 5, { color: "black", fillColor: "black", fillOpacity: 0.5}).addTo(map);
+                //Centroid is solid RED
+                if(drawCentroid){
+                    var circle = L.circle([finalLatDegrees, finalLonDegrees], 5, { color: "red", fillColor: "red", fillOpacity: 1}).addTo(map);
+                }
             }
-//            else if(countGridOrigin[i][j].length==1){
-            else if(countGridDestination[i][j].length==1){
-                midPoint.push({location: { accuracy: 1, latitude: countGrid[i][j][0].location.latitude, longitude: countGrid[i][j][0].location.longitude }});
-                //var circle = L.circle([countGrid[i][j][0].location.latitude, countGrid[i][j][0].location.longitude], 5, { color: "red", fillColor: "red", fillOpacity: 0.5}).addTo(map);
+            else if(gridCountOrigin[i][j].length==1){
+                centroidOrigin.push({location: { accuracy: 1, latitude: gridCountOrigin[i][j][0].location.latitude, longitude: gridCountOrigin[i][j][0].location.longitude }});
+                if(drawCentroid){
+                    var circle = L.circle([gridCountOrigin[i][j][0].location.latitude, gridCountOrigin[i][j][0].location.longitude], 5, { color: "red", fillColor: "red", fillOpacity: 0.5}).addTo(map);
+                } 
+            }
+        }
+    }
+    var new_time = new Date();
+    console.log("Calculate centroid origin = "+(new_time - old_time)+" ms");
+} 
+    
+function calculateCentroidDestination(drawCentroid){
+    var old_time = new Date();
+    for(var i=0;i<gridCountDestination.length;i++){
+        centroidGridNumDestination[i]=[];
+        for(var j=0;j<gridCountDestination[i].length;j++){     
+            if(gridCountDestination[i][j].length>1){
+                var latXTotal = 0;
+                var latYTotal = 0;
+                var lonDegreesTotal = 0;
+                for(var k=0;k<gridCountDestination[i][j].length;k++){
+                    var latDegrees = parseFloat(gridCountDestination[i][j][k].location.latitude);
+                    var lonDegrees = parseFloat(gridCountDestination[i][j][k].location.longitude);
+                    
+                    var latRadians = Math.PI * latDegrees / 180;
+                    latXTotal += Math.cos(latRadians);
+                    latYTotal += Math.sin(latRadians);
+
+                    lonDegreesTotal = lonDegreesTotal+lonDegrees;
+                }
+                var finalLatRadians = Math.atan2(latYTotal, latXTotal);
+                var finalLatDegrees = finalLatRadians * 180 / Math.PI;
+                var finalLonDegrees = lonDegreesTotal / gridCountDestination[i][j].length;
+            
+                centroidDestination.push({location: { accuracy: 1, latitude: finalLatDegrees, longitude: finalLonDegrees }});
+                centroidGridNumDestination[i][j]={location: { accuracy: 1, latitude: finalLatDegrees, longitude: finalLonDegrees }};
+                
+                if(drawCentroid){
+                    var circle = L.circle([finalLatDegrees, finalLonDegrees], 5, { color: "red", fillColor: "red", fillOpacity: 0.5}).addTo(map);    
+                }
+                
+            }
+            else if(gridCountDestination[i][j].length==1){
+                centroidDestination.push({location: { accuracy: 1, latitude: gridCountDestination[i][j][0].location.latitude, longitude: gridCountDestination[i][j][0].location.longitude }});
+                if(drawCentroid){
+                    var circle = L.circle([gridCountDestination[i][j][0].location.latitude, gridCountDestination[i][j][0].location.longitude], 5, { color: "red", fillColor: "red", fillOpacity: 0.5}).addTo(map);
+                }
             }
         }
     }
     var new_time = new Date();
     console.log("Calculate centroid = "+(new_time - old_time)+" ms");
+}     
     
-    
-    //======== CLUSTERING ORIGIN GRID MID POINT
-    // Eps -+ 2xgridSize 
-    // Min pts = jumlah grid yang masih dalam satu kawasan
+function dbscan(data,eps,minPts,color,drawPointRadius){
+   
     var old_time = new Date();
-    var dbscanOriginMidPoint = jDBSCAN().eps(0.2).minPts(2).distance('HAVERSINE').data(midPoint);
-    var dbscanResultOriginMidPoint = dbscanOriginMidPoint();
-    var clusterCentersOriginMidPoint = dbscanOriginMidPoint.getClusters();
-    var clusterCountOriginMidPoint=[];
-    var unclusteredOriginMidPoint=0;
+    var dbscan = jDBSCAN().eps(eps).minPts(minPts).distance('HAVERSINE').data(data);
+    var dbscanResult = dbscan();
+    var clusterCenters = dbscan.getClusters();
+    var clusterCount=[];
+    var unclustered=0;
     
-    for(var i=0; i<dbscanResultOriginMidPoint.length; i++){
-        if(clusterCountOriginMidPoint[dbscanResultOriginMidPoint[i]]==null){ clusterCountOriginMidPoint[dbscanResultOriginMidPoint[i]]=0; }
-        clusterCountOriginMidPoint[dbscanResultOriginMidPoint[i]]++;  
+    for(var i=0; i<dbscanResult.length; i++){
+        if(clusterCount[dbscanResult[i]]==null){ clusterCount[dbscanResult[i]]=0; }
+        clusterCount[dbscanResult[i]]++;  
         
-        if(dbscanResultOriginMidPoint[i]!=0){
+        if(dbscanResult[i]!=0){
             //colors.getRandom()  //dbscanResultOrigin[2]   
-            var circle = L.circle([midPoint[i].location.latitude, midPoint[i].location.longitude], 10, {
-                color: markerColors[dbscanResultOriginMidPoint[i]],
-                fillColor: markerColors[dbscanResultOriginMidPoint[i]],
-                fillOpacity: 2
+            if(color=="random"){
+                var drawColor=markerColors[dbscanResult[i]];
+            }else{
+                var drawColor=color;                               
+            }
+            
+            var circle = L.circle([data[i].location.latitude, data[i].location.longitude], drawPointRadius, {
+                color: drawColor,
+                fillColor: drawColor,
+                fillOpacity: 1
             }).addTo(map);              
         }else{
-            unclusteredOriginMidPoint++;
+            unclustered++;
         }       
     }
-    console.log("== ORIGIN MIDPOINT ==");
-    console.log("Total point = "+ midPoint.length);
-    console.log("Cluster summary = "+ clusterCountOriginMidPoint);
-    console.log("Cluster center = "+ clusterCentersOriginMidPoint);
-    console.log("Cluster count = "+ (clusterCountOriginMidPoint.length-1));
-    console.log("Clustered trip = "+ (midPoint.length-clusterCountOriginMidPoint[0]) );
-    console.log("Unclustered trip = "+ clusterCountOriginMidPoint[0]);
+    console.log("== CLUSTERING ==");
+    console.log("Total point = "+ data.length);
+    console.log("Cluster summary = "+ clusterCount);
+    console.log("Cluster center = "+ clusterCenters);
+    console.log("Cluster count = "+ (clusterCount.length-1));
+    console.log("Clustered trip = "+ (data.length-clusterCount[0]) );
+    console.log("Unclustered trip = "+ clusterCount[0]);
     var new_time = new Date();
     console.log("Clustering time = "+(new_time - old_time)+" ms");
-        
-    //========== CULSTERING DESTINATION POINT
-    var dbscanDestination = jDBSCAN().eps(0.25).minPts(10).distance('HAVERSINE').data(destinationPoint);
-    var dbscanResultDestination = dbscanDestination();
-    var clusterCountDestination=[];
-    var unclusteredDestination=0;
+}    
     
-    for(var i=0; i<dbscanResultDestination.length; i++){
-        if(clusterCountDestination[dbscanResultDestination[i]]==null){ clusterCountDestination[dbscanResultDestination[i]]=0; }
-        clusterCountDestination[dbscanResultDestination[i]]++;  
-        
-        if(dbscanResultDestination[i]!=0){
-            //colors.getRandom()    
-            var circle = L.circle([destinationPoint[i].location.latitude, destinationPoint[i].location.longitude], 10, {
-                color: markerColors[3],
-                //fillColor: markerColors[3],
-                fillOpacity: 0.5
-            }).addTo(map);
-            
-
-            
-        }else{
-            unclusteredDestination++;
-        }       
-    }
-
-    console.log("== DESTINATION ==");
-    console.log("Total trip = "+ destinationPoint.length);
-    console.log("Cluster summary = "+ clusterCountDestination);
-    console.log("Cluster count = "+ (clusterCountDestination.length-1));
-    console.log("Clustered trip = "+ (destinationPoint.length-clusterCountDestination[0]) );
-    console.log("Unclustered trip = "+ clusterCountDestination[0]);
+$(document).ready(function() {
+    var gridSize=0.001;
+    var gridLineWeight=0.1;
+    var gridLineColor="black";
     
-}
+    var boundColor="grey";
+    var boundWeight=0.1;
+    var boundOppacity=0.1;
+    
+    buildMap(bandungCentroid);
+    drawBound(bandungBounds,boundColor,boundWeight,boundOppacity);
+    drawGridLine(bandungBounds,gridSize,gridLineWeight,gridLineColor);
+    
+    $.ajax({
+        type: "GET",
+        url: "argo_gps_join_12.csv",
+        dataType: "text",
+        success: function(data) {
+            var drawPointOrigin=false;
+            var drawPointDestination=false;
+            var mapOrigin=false;
+            var mapDestination=true;
+            
+            var drawCentroidOrigin=false;    
+            var epsOrigin=0.2;
+            var minPtsOrigin=2;
+            var clusterColorOrigin="blue";
+            var drawPointRadiusOrigin=10;
+            
+            var drawCentroidDestination=false;
+            var epsDestination=0.1;
+            var minPtsDestination=2;
+            var clusterColorDestination="green";
+            var drawPointRadiusDestination=10;
+            
+            
+            var when="2015-12-25";
+            
+            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize);
+                          
+            calculateCentroidOrigin(drawCentroidOrigin);    
+            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
+            
+            calculateCentroidDestination(drawCentroidDestination);    
+            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
+        
+        }
+    });
+});
     
 //=================== FOR ANIMATION
 //        var i = 0;                     //  set your counter to 1
@@ -292,14 +370,9 @@ function processData(allText) {
 //        myLoop();                      //  start the loop     
     
 </script> 
-    
 </head>
 
 <body>
-
-<div id='map'></div>
-    
-
+    <div id='map'></div>  
 </body>
 </html>
-
