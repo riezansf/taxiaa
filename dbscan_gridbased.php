@@ -29,16 +29,13 @@
             text-align: center;
         }
     </style>
-  
-    
-   
     
 <script>
-    //lat = atas-bawah Y, makin kecil makin ke atas (utara)
-    //long = kiri-kanan X, makin kecil makin ke kiri (barat)
-    //atas-bawah = 14.23 KM , kiri-kanan=21.09 KM , diagonal=25.44 KM, luas=300.1107 KM
-    //0.001 point GPS = 109.5546875 Meter 
-    //Grid size (Meter) 10 / 25 / 50 / 100 / 200
+//lat = atas-bawah Y, makin kecil makin ke atas (utara)
+//long = kiri-kanan X, makin kecil makin ke kiri (barat)
+//atas-bawah = 14.23 KM , kiri-kanan=21.09 KM , diagonal=25.44 KM, luas=300.1107 KM
+//0.001 point GPS = 109.5546875 Meter 
+//Grid size (Meter) 10 / 25 / 50 / 100 / 200
 var map;
 var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
@@ -58,7 +55,10 @@ var centroidGridNumOrigin=[];
 var centroidDestination=[];
 var centroidGridNumDestination=[];
     
+var grid=[];
+    
 function buildMap(bandungCentroid){
+    var start = new Date();
     map = L.map('map').setView(bandungCentroid, 13);
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -66,14 +66,18 @@ function buildMap(bandungCentroid){
         id: 'laezano.18b09133',
         accessToken: 'pk.eyJ1IjoibGFlemFubyIsImEiOiIxYzMzNmJmOTdjY2M4MmI5N2U2ZWI1ZjYyZTYyZGVmNCJ9.-VDDMhYojWz8ghvMftCkcw'
     }).addTo(map);
+    console.log("Build map time = "+(new Date() - start)+"ms");
 }    
 
 function drawBound(bound,color,weight,fillOpacity){
+    var start = new Date();
     L.rectangle(bound, {color: color, weight: weight, fillOpacity:fillOpacity}).addTo(map);
     map.fitBounds(bound);
+    console.log("Draw bound time = "+(new Date() - start)+"ms");
 }
 
 function drawGridLine(bounds,gridSize,weight,color){
+    var start = new Date();
     var gridCount=0;
     var row=0; var col=0;
     for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
@@ -90,16 +94,40 @@ function drawGridLine(bounds,gridSize,weight,color){
         var polyline = L.polyline([new L.LatLng(j,bounds[0][1]),new L.LatLng(j,bounds[1][1])], { color: color, weight: weight }).bindLabel("row "+row).addTo(map);
         row++;
     }
+    console.log("Draw grid line = "+(new Date() - start)+"ms");
     console.log("Grid size = "+row+"x"+col);   
 }
     
-function drawGridRectangle(){
-    //==== TODO Draw Rectangle to create grid
-    //label = new L.Label()
-    //label.setContent("static label")
-    //label.setLatLng(polygon.getBounds().getCenter())
-    //map.showLabel(label); 
-    return;
+function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
+    var start = new Date();
+    var gridCount=0;
+    var row=0; var col=0;
+    
+    for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
+        if(grid[row]==null){grid[row]=[]}
+        
+        var k=bounds[0][1]; 
+        col=0;
+        while(k<bounds[1][1]){
+            
+            var b=[[j, k] , [(j-gridSize).toFixed(12), (k+gridSize).toFixed(12)]];
+            var rectangle = L.rectangle(b, {color: color, weight: weight, fillOpacity:fillOpacity}).bindLabel(row+","+col).addTo(map);
+            
+            if(grid[row][col]==null){grid[row][col]=[];}
+            grid[row][col]={
+                rectangle : rectangle,
+                point : []
+                centroid : [0,0]
+            };
+            
+            k=(k+gridSize);
+            gridCount++;
+            col++;
+        }
+        row++;
+    }
+    console.log("Draw grid rectangle = "+(new Date() - start)+"ms");
+    console.log("Grid size = "+row+"x"+col+"  TOTAL grid : "+gridCount); 
 }
 
 function mapPointToGridOrigin(lines,bounds,gridSize){
@@ -165,8 +193,12 @@ function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapO
                 var circle = L.circle([lines[14], lines[15]], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(destinationPoint.length+". "+lines[8]+","+lines[9]).addTo(map);
             }
             
-            if(mapOrigin){mapPointToGridOrigin(lines,bounds,gridSize);}
-            if(mapDestination){mapPointToGridDestination(lines,bounds,gridSize);}
+            if(mapOrigin){
+                //mapPointToGridOrigin(lines,bounds,gridSize);
+                
+                
+            }
+            //if(mapDestination){mapPointToGridDestination(lines,bounds,gridSize);}
         }
     }
     var new_time = new Date();
@@ -213,7 +245,7 @@ function calculateCentroidOrigin(drawCentroid){
         }
     }
     var new_time = new Date();
-    console.log("Calculate centroid origin = "+(new_time - old_time)+" ms");
+    console.log("Calculate centroid origin time = "+(new_time - old_time)+" ms");
 } 
     
 function calculateCentroidDestination(drawCentroid){
@@ -256,7 +288,7 @@ function calculateCentroidDestination(drawCentroid){
         }
     }
     var new_time = new Date();
-    console.log("Calculate centroid = "+(new_time - old_time)+" ms");
+    console.log("Calculate centroid time = "+(new_time - old_time)+" ms");
 }     
     
 function dbscan(data,eps,minPts,color,drawPointRadius){
@@ -301,17 +333,22 @@ function dbscan(data,eps,minPts,color,drawPointRadius){
 }    
     
 $(document).ready(function() {
-    var gridSize=0.001;
-    var gridLineWeight=0.1;
-    var gridLineColor="black";
-    
     var boundColor="grey";
     var boundWeight=0.1;
-    var boundOppacity=0.1;
+    var boundOppacity=0.2;
+    
+    var gridSize=0.001;
+    var gridLineWeight=0.1;
+    var gridLineColor="grey";
+    
+    var gridWeight=0.05;
+    var gridColor="grey";
+    var gridRectanglefillOpacity=0.1;
     
     buildMap(bandungCentroid);
-    drawBound(bandungBounds,boundColor,boundWeight,boundOppacity);
-    drawGridLine(bandungBounds,gridSize,gridLineWeight,gridLineColor);
+    //drawBound(bandungBounds,boundColor,boundWeight,boundOppacity);
+    //drawGridLine(bandungBounds,gridSize,gridLineWeight,gridLineColor);
+    drawGridRectangle(bandungBounds,gridSize,gridColor,gridColor,gridRectanglefillOpacity);
     
     $.ajax({
         type: "GET",
@@ -327,7 +364,7 @@ $(document).ready(function() {
             var drawCentroidOrigin=false;    
             var epsOrigin=0.2;
             var minPtsOrigin=2;
-            var clusterColorOrigin="blue";
+            var clusterColorOrigin="random";
             var drawPointRadiusOrigin=10;
             
             var drawCentroidDestination=false;
@@ -336,22 +373,23 @@ $(document).ready(function() {
             var clusterColorDestination="green";
             var drawPointRadiusDestination=10;
             
-            var when="2015-12-25";
+            var when="2015-12-26";
             
             //gridbased dbscan
-//            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize);
-//                          
-//            calculateCentroidOrigin(drawCentroidOrigin); 
-//            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
-//            
+            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize);
+            console.log(grid[0][0].rectangle.setStyle({fillColor:"red"}));              
+            
+            //calculateCentroidOrigin(drawCentroidOrigin); 
+            //dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
+            
 //            calculateCentroidDestination(drawCentroidDestination);    
 //            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
 //        
         
             //dbscan
-            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,false,false,bandungBounds,gridSize);
-            dbscan(originPoint,0.2,5,clusterColorOrigin,10);
-            dbscan(destinationPoint,0.2,5,clusterColorDestination,10);
+//            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,false,false,bandungBounds,gridSize);
+//            dbscan(originPoint,0.2,5,clusterColorOrigin,10);
+//            dbscan(destinationPoint,0.2,5,clusterColorDestination,10);
         
         }
     });
