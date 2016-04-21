@@ -1,0 +1,132 @@
+<html>
+<head>
+<meta charset=utf-8 />
+<title>A simple map</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.css' rel='stylesheet' />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+</head>
+<body>
+
+<div id='map'></div>
+    
+<script>
+L.mapbox.accessToken = 'pk.eyJ1IjoibGFlemFubyIsImEiOiIxYzMzNmJmOTdjY2M4MmI5N2U2ZWI1ZjYyZTYyZGVmNCJ9.-VDDMhYojWz8ghvMftCkcw';
+var map = L.mapbox.map('map', 'mapbox.streets')
+    .setView([-6.914744, 107.609810], 13);
+    
+    $(document).ready(function() {
+        $.ajax({
+            type: "GET",
+            url: "a2d1_20150109.csv",
+            dataType: "text",
+            success: function(data) {
+                processData(data);
+            }
+        });
+    });
+    
+   
+    var marker;
+    var markers=[];
+    function processData(allText) {
+        var allTextLines = allText.split(/\r\n|\n/);
+        var headers = allTextLines[0].split(',');
+        var lines = [];
+
+        for (var i=0; i<allTextLines.length; i++) {
+            var data = allTextLines[i].split(',');
+            if (data.length == headers.length) {
+
+                var tarr = [];
+                for (var j=0; j<headers.length; j++) {
+                    tarr.push(data[j]);
+                }
+                lines.push(tarr);
+                //console.log(tarr[4]+","+tarr[5]);
+            }
+            
+        }
+        //console.log(lines);
+        console.log(lines.length);
+    
+        for (var i=0; i<25; i++) {
+            marker = L.mapbox.featureLayer(
+                {
+                    type: 'FeatureCollection',
+                    features: [
+                      {
+                        type: "Feature",
+                        properties: {
+                          title: i,
+                          'marker-color': '#f86767',
+                        },
+                        geometry: {
+                          type: "Point",
+                          coordinates: [lines[i][4],lines[i][5]]
+                        }
+                      }
+                    ]
+                })
+                .addTo(map);
+            markers.push(marker);
+        }
+        
+        for (var i=0; i<markers.length; i++) {
+            console.log(markers[i]);
+            markers[i].openPopup();
+        }
+        
+//        featureLayer.eachLayer(function(m) {
+//            console.log("a");
+//                    m.openPopup();
+//        });
+         
+        marker.eachLayer(function(m) {
+            m.openPopup();
+        });
+       
+//        console.log(lines[2][2]);
+//        console.log(lines[2][3]);
+
+
+
+	//Centroid Bandung
+//	featureLayer = L.mapbox.featureLayer(
+//                {
+//                    type: 'FeatureCollection',
+//                    features: [
+//                      {
+//                        type: "Feature",
+//                        properties: {
+//                          title: "ONE"
+//                        },
+//                        geometry: {
+//                          type: "Point",
+//                          coordinates: [40.6639206199602,-73.9383529238219]
+//                        }
+//                      }
+//                    ]
+//                }).addTo(map);
+        
+    // define rectangle geographical bounds
+    //var bounds = [[40.917577, -74.25909], [40.477399, -73.700009]];
+
+    // create an orange rectangle
+    //L.rectangle(bounds, {color: "#000000", weight: 1}).addTo(map);
+
+    // zoom the map to the rectangle bounds
+    //map.fitBounds(bounds);
+        
+        
+    }
+</script>
+
+</body>
+</html>
+

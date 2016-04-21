@@ -1,0 +1,131 @@
+<html>
+<head>
+<meta charset=utf-8 />
+<title>A simple map</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.css' rel='stylesheet' />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+</head>
+<body>
+
+<div id='map'></div>
+    
+<script>
+L.mapbox.accessToken = 'pk.eyJ1IjoibGFlemFubyIsImEiOiIxYzMzNmJmOTdjY2M4MmI5N2U2ZWI1ZjYyZTYyZGVmNCJ9.-VDDMhYojWz8ghvMftCkcw';
+var map = L.mapbox.map('map', 'mapbox.streets')
+    .setView([40.6639206199602, -73.9383529238219], 13);
+    
+    $(document).ready(function() {
+        $.ajax({
+            type: "GET",
+            url: "data.csv",
+//            url: "a2d1_20150109.csv",
+            dataType: "text",
+            success: function(data) {
+                processData(data);
+            }
+        });
+    });
+    
+   
+    
+    var featureLayer;
+    function processData(allText) {
+        var allTextLines = allText.split(/\r\n|\n/);
+        var headers = allTextLines[0].split(',');
+        var lines = [];
+
+        for (var i=1; i<allTextLines.length; i++) {
+            var data = allTextLines[i].split(',');
+            if (data.length == headers.length) {
+
+                var tarr = [];
+                for (var j=0; j<headers.length; j++) {
+                    tarr.push(data[j]);
+                }
+                lines.push(tarr);
+                
+                //console.log(tarr[2]+","+tarr[3]);
+                
+//                featureLayer = L.mapbox.featureLayer(
+//                {
+//                    type: 'FeatureCollection',
+//                    features: [
+//                      {
+//                        type: "Feature",
+//                        properties: {
+//                          title: "ONE"
+//                        },
+//                        geometry: {
+//                          type: "Point",
+//                          coordinates: [tarr[2],tarr[3]]
+//                        }
+//                      }
+//                    ]
+//                }).addTo(map);
+                //map.fitBounds(featureLayer.getBounds());
+            }
+            
+        }
+        for (var i=1; i<100; i++) {
+            featureLayer = L.mapbox.featureLayer(
+                {
+                    type: 'FeatureCollection',
+                    features: [
+                      {
+                        type: "Feature",
+                        properties: {
+                          title: "ONE"
+                        },
+                        geometry: {
+                          type: "Point",
+                          coordinates: [lines[i][2],lines[i][3]]
+                        }
+                      }
+                    ]
+                }).addTo(map);
+        }
+//        console.log(lines[2][2]);
+//        console.log(lines[2][3]);
+
+
+
+	//Centroid NYC
+	featureLayer = L.mapbox.featureLayer(
+                {
+                    type: 'FeatureCollection',
+                    features: [
+                      {
+                        type: "Feature",
+                        properties: {
+                          title: "ONE"
+                        },
+                        geometry: {
+                          type: "Point",
+                          coordinates: [40.6639206199602,-73.9383529238219]
+                        }
+                      }
+                    ]
+                }).addTo(map);
+        
+    // define rectangle geographical bounds
+    //var bounds = [[40.917577, -74.25909], [40.477399, -73.700009]];
+
+    // create an orange rectangle
+    //L.rectangle(bounds, {color: "#000000", weight: 1}).addTo(map);
+
+    // zoom the map to the rectangle bounds
+    //map.fitBounds(bounds);
+        
+        
+    }
+</script>
+
+</body>
+</html>
+
