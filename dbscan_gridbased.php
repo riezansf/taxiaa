@@ -326,8 +326,8 @@ $(document).ready(function() {
         url: "argo_gps_join_12.csv",
         dataType: "text",
         success: function(data) {
-            var drawPointOrigin=false; //blue
-            var drawPointDestination=false; //green
+            var drawPointOrigin=true; //blue
+            var drawPointDestination=true; //green
             
             var mapOrigin=true;
             var mapDestination=true;
@@ -349,12 +349,12 @@ $(document).ready(function() {
             //Rectangle gridbased dbscan
             read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
             
-            calculateCentroidOrigin(drawCentroidOrigin); 
-            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
-          
-            calculateCentroidDestination(drawCentroidDestination);    
-            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
-        
+    //            calculateCentroidOrigin(drawCentroidOrigin); 
+    //            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
+    //          
+    //            calculateCentroidDestination(drawCentroidDestination);    
+    //            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
+    //        
         
             //==== Non gridbased dbscan
 //            dbscan(originPoint,0.2,5,clusterColorOrigin,10);
