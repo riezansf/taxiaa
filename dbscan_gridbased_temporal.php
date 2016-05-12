@@ -54,6 +54,8 @@ var grid=[];
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
     
+var clusteredPoints=[];
+    
 function buildMap(bandungCentroid){
     var start = new Date();
     map = L.map('map').setView(bandungCentroid, 14);
@@ -236,9 +238,9 @@ function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapO
         if(date==""){ var whereDate=true; }else{ var whereDate=date; }
         
         if(lines[1]==whereDate && lines[9]!="" && lines[14]!="" && lines[15]!="" && lines[8]!=null && lines[9]!=null && lines[14]!=null && lines[15]!=null){  //if coordinate !=""
-            
-            originPoint.push({location: { accuracy: 1, latitude: lines[8], longitude: lines[9] }});
-            destinationPoint.push({location: { accuracy: 1, latitude: lines[14], longitude: lines[15] }});
+                      
+            originPoint.push({location: { accuracy: 1, latitude: lines[8], longitude: lines[9] },timestamp: Math.round(new Date(lines[1]+" "+lines[2]).getTime()/1000)});
+            destinationPoint.push({location: { accuracy: 1, latitude: lines[14], longitude: lines[15] },timestamp: Math.round(new Date(lines[1]+" "+lines[3]).getTime()/1000)});
                         
             if(drawPointOrigin){ //origin point color is blue
                 var circle = L.circle([lines[8], lines[9]], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(originPoint.length+". "+lines[8]+","+lines[9]).addTo(map);
@@ -261,18 +263,22 @@ function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapO
     console.log("Origin point mapped to grid : "+pointMappedToGridO+" , Destination point mapped to grid : "+pointMappedToGridD);
 }   
        
-function dbscan(data,eps,minPts,color,drawPointRadius){
+function dbscan(data,eps,minPts,timeEps,color,drawPointRadius){
     var old_time = new Date();
-    var dbscan = jDBSCAN().eps(eps).minPts(minPts).distance('HAVERSINE').data(data);
+    var dbscan = jDBSCAN().eps(eps).minPts(minPts).distance('HAVERSINE').timeEps(timeEps).data(data);
     var dbscanResult = dbscan();
     var clusterCenters = dbscan.getClusters();
     var clusterCount=[];
+   
     var unclustered=0;
     
     //each point labeled with cluster number
     for(var i=0; i<dbscanResult.length; i++){
         if(clusterCount[dbscanResult[i]]==null){ clusterCount[dbscanResult[i]]=0; }
         clusterCount[dbscanResult[i]]++;  
+        
+        if(clusteredPoints[dbscanResult[i]]==null){ clusteredPoints[dbscanResult[i]]=[]; }
+        clusteredPoints[dbscanResult[i]].push(data[i]); 
         
         if(dbscanResult[i]!=0){ 
             if(color=="random"){
@@ -281,17 +287,27 @@ function dbscan(data,eps,minPts,color,drawPointRadius){
                 var drawColor=color;                               
             }
             
+            var date = new Date(data[i].timestamp*1000);
+            // Hours part from the timestamp
+            var hours = date.getHours();
+            // Minutes part from the timestamp
+            var minutes = "0" + date.getMinutes();
+            // Seconds part from the timestamp
+            var seconds = "0" + date.getSeconds();
+            var time = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+         
+            
             var circle = L.circle([data[i].location.latitude, data[i].location.longitude], drawPointRadius, {
                 color: drawColor,
                 fillColor: drawColor,
                 fillOpacity: 1
-            }).bindLabel("Cluster number : "+dbscanResult[i]+"\nRecord no : "+i).addTo(map); 
+            }).bindLabel("Cluster number : "+dbscanResult[i]+"\nRecord no : "+i+"\nTime : "+time).addTo(map); 
                 
              for(var j=0;j<grid.length;j++){
                 for(var k=0;k<grid[j].length;k++){                                       
                     if(data[i].location.latitude>grid[j][k].topLeft[0] && data[i].location.latitude<grid[j][k].rightBottom[0] && data[i].location.longitude<grid[j][k].rightBottom[1]){
                         //console.log(typeof(data[i].location.latitude)+">"+typeof(grid[j][k].topLeft[0]));  
-                        grid[j][k].rectangle.setStyle({fillColor:drawColor,fillOpacity:0.5});
+                        grid[j][k].rectangle.setStyle({fillColor:drawColor,fillOpacity:0.8});
                         break;
                     }
                 }
@@ -326,7 +342,7 @@ $(document).ready(function() {
         url: "argo_gps_join_12.csv",
         dataType: "text",
         success: function(data) {
-            var drawPointOrigin=true; //blue
+            var drawPointOrigin=false; //blue
             var drawPointDestination=false; //green
             
             var mapOrigin=true;
@@ -349,17 +365,32 @@ $(document).ready(function() {
             //Rectangle gridbased dbscan
             read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
             
-            calculateCentroidOrigin(drawCentroidOrigin); 
-            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
-              
+    //            calculateCentroidOrigin(drawCentroidOrigin); 
+    //            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
+    //          
     //            calculateCentroidDestination(drawCentroidDestination);    
     //            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
     //        
         
             //==== Non gridbased dbscan
-//            dbscan(originPoint,0.2,5,clusterColorOrigin,10);
+            dbscan(originPoint,0.2,5,"asdasd","random",10);
 //            dbscan(destinationPoint,0.2,5,clusterColorDestination,10);
         
+            for(var i=1; i<clusteredPoints.length; i++){
+                for(var j=0; j<clusteredPoints[i].length; j++){
+                    var date = new Date(clusteredPoints[i][j].timestamp*1000);
+                    // Hours part from the timestamp
+                    var hours = date.getHours();
+                    // Minutes part from the timestamp
+                    var minutes = "0" + date.getMinutes();
+                    // Seconds part from the timestamp
+                    var seconds = "0" + date.getSeconds();
+                    var time = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+                    console.log(i+" "+time);
+                }
+                
+            }
         }
     });
 });
