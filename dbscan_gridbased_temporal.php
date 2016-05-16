@@ -112,18 +112,19 @@ function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
     console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
 }
    
-function mapPointToGrid(lat,long,OD){
+function mapPointToGrid(point,OD){
     for(var j=0;j<grid.length;j++){
         for(var k=0;k<grid[j].length;k++){
-            if( lat>grid[j][k].topLeft[0] && lat<grid[j][k].rightBottom[0] && long<grid[j][k].rightBottom[1]){
+            if( point.location.latitude>grid[j][k].topLeft[0] && point.location.latitude<grid[j][k].rightBottom[0] && point.location.longitude<grid[j][k].rightBottom[1]){
                 //.log(typeof(lat)+">"+typeof(grid[j][k].topLeft[0])); 
                 if(OD=="origin"){
-                    grid[j][k].origin.push({location: { accuracy: 1, latitude: (lat), longitude: (long) }});
+                    grid[j][k].origin.push(point);
                     pointMappedToGridO++;
                 }else{
-                    grid[j][k].destination.push({location: { accuracy: 1, latitude: (lat), longitude: (long) }});
+                    grid[j][k].destination.push(point);
                     pointMappedToGridD++;
-                }    
+                }
+                return j+","+k;
                 break;
             }
         }
@@ -238,9 +239,13 @@ function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapO
         if(date==""){ var whereDate=true; }else{ var whereDate=date; }
         
         if(lines[1]==whereDate && lines[9]!="" && lines[14]!="" && lines[15]!="" && lines[8]!=null && lines[9]!=null && lines[14]!=null && lines[15]!=null){  //if coordinate !=""
-                      
-            originPoint.push({location: { accuracy: 1, latitude: lines[8], longitude: lines[9] },timestamp: Math.round(new Date(lines[1]+" "+lines[2]).getTime()/1000)});
-            destinationPoint.push({location: { accuracy: 1, latitude: lines[14], longitude: lines[15] },timestamp: Math.round(new Date(lines[1]+" "+lines[3]).getTime()/1000)});
+              
+            var origin={location: { accuracy: 1, latitude: lines[8], longitude: lines[9] },timestamp: Math.round(new Date(lines[1]+" "+lines[2]).getTime()/1000), grid:""};
+            var destination={location: { accuracy: 1, latitude: lines[14], longitude: lines[15] },timestamp: Math.round(new Date(lines[1]+" "+lines[3]).getTime()/1000), grid:""};
+           
+            
+            originPoint.push(origin);
+            destinationPoint.push(destination);
                         
             if(drawPointOrigin){ //origin point color is blue
                 var circle = L.circle([lines[8], lines[9]], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(originPoint.length+". "+lines[8]+","+lines[9]).addTo(map);
@@ -249,12 +254,8 @@ function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapO
                 var circle = L.circle([lines[14], lines[15]], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(destinationPoint.length+". "+lines[8]+","+lines[9]).addTo(map);
             }
             
-            if(mapOrigin){
-                mapPointToGrid(lines[8],lines[9],"origin");
-            }
-            if(mapDestination){
-                mapPointToGrid(lines[14],lines[15],"destination");
-            }
+            if(mapOrigin){ mapPointToGrid(origin,"origin"); }
+            if(mapDestination){ mapPointToGrid(destination,"destination"); }
         }
     }
     var new_time = new Date();
