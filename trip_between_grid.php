@@ -35,7 +35,6 @@
             text-align: center;
         }
     </style>
-    
 <script>
 //lat = atas-bawah Y, makin kecil makin ke atas (utara)
 //long = kiri-kanan X, makin kecil makin ke kiri (barat)
@@ -406,32 +405,6 @@ function dbscan(data,eps,minPts,timeEps,color,drawPointRadius){
     var new_time = new Date();
     console.log("Clustering time = "+(new_time - old_time)+" ms");
 }    
-
-function taniarza(no,point){
-    var gridNo=0;
-    for(var j=0;j<grid.length;j++){
-        for(var k=0;k<grid[j].length;k++){
-            gridNo++;
-            if(point.location.latitude>grid[j][k].topLeft[0] && point.location.latitude<grid[j][k].rightBottom[0] && point.location.longitude<grid[j][k].rightBottom[1]){                
-                console.log(no+" "+gridNo+" "+j+","+k);
-                return no+" "+gridNo+" "+j+","+k;
-                break;
-            }
-        }
-    }
-}    
-    
-function natya(csv){
-    allTextLines = csv.split(/\r\n|\n/);
-    console.log(allTextLines.length);
-    var lines = [];
-    var point;
-    for (var i=0; i<allTextLines.length; i++) {
-        lines = allTextLines[i].split(',');
-        point={location: { accuracy: 1, latitude: lines[0], longitude: lines[1] },timestamp: "", grid:""};
-        result.push(taniarza(i,point));
-    }
-}    
     
 $(document).ready(function() {    
     var gridSize=0.005;
@@ -443,18 +416,6 @@ $(document).ready(function() {
     
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize,gridWeight,gridColor,gridFillOpacity);
-    
-    $.ajax({
-        type: "GET",
-        url: "allpoint.csv",
-        dataType: "text",
-        success: function(data) {
-           natya(data); 
-           for (var i=0; i<result.length; i++) {
-            $("#result").append(result[i]);  
-           }
-        }
-    });
     
 //    $.ajax({
 //        type: "GET",
