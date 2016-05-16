@@ -61,9 +61,9 @@ var gridByNumber=[];
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
     
-var clusteredPoints
-
-var tripBetweenGrid=[]; //pagi,grid_origin,grid_destination
+var clusteredPoints;
+    
+var result=[];
     
 function buildMap(bandungCentroid){
     var start = new Date();
@@ -132,31 +132,6 @@ function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
     }
     console.log("Time to draw grid rectangle = "+(new Date() - start)+"ms");
     console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
-}
-   
-function mapPointToGrid(point,OD){
-    var gridNo=0;
-    for(var j=0;j<grid.length;j++){
-        for(var k=0;k<grid[j].length;k++){
-            gridNo++;
-            if( point.location.latitude>grid[j][k].topLeft[0] && point.location.latitude<grid[j][k].rightBottom[0] && point.location.longitude<grid[j][k].rightBottom[1]){
-                //.log(typeof(lat)+">"+typeof(grid[j][k].topLeft[0])); 
-                point.grid={
-                  no:gridNo,
-                  row:j,
-                  column:k
-                };
-                if(OD=="origin"){
-                    grid[j][k].origin.push(point);
-                    pointMappedToGridO++;
-                }else{
-                    grid[j][k].destination.push(point);
-                    pointMappedToGridD++;
-                }
-                break;
-            }
-        }
-    }
 }
     
 function calculateCentroidOrigin(drawCentroid){
@@ -255,6 +230,31 @@ function calculateCentroidDestination(drawCentroid){ 
     console.log("Total trip : "+destinationPoint.length+" , Active grid Destination:"+centroidDestination.length);
           
 }    
+    
+function mapPointToGrid(point,OD){
+    var gridNo=0;
+    for(var j=0;j<grid.length;j++){
+        for(var k=0;k<grid[j].length;k++){
+            gridNo++;
+            if( point.location.latitude>grid[j][k].topLeft[0] && point.location.latitude<grid[j][k].rightBottom[0] && point.location.longitude<grid[j][k].rightBottom[1]){
+                //.log(typeof(lat)+">"+typeof(grid[j][k].topLeft[0])); 
+                point.grid={
+                  no:gridNo,
+                  row:j,
+                  column:k
+                };
+                if(OD=="origin"){
+                    grid[j][k].origin.push(point);
+                    pointMappedToGridO++;
+                }else{
+                    grid[j][k].destination.push(point);
+                    pointMappedToGridD++;
+                }
+                break;
+            }
+        }
+    }
+}
     
 function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bounds,gridSize){
     allTextLines = csv.split(/\r\n|\n/);
@@ -406,6 +406,32 @@ function dbscan(data,eps,minPts,timeEps,color,drawPointRadius){
     var new_time = new Date();
     console.log("Clustering time = "+(new_time - old_time)+" ms");
 }    
+
+function taniarza(no,point){
+    var gridNo=0;
+    for(var j=0;j<grid.length;j++){
+        for(var k=0;k<grid[j].length;k++){
+            gridNo++;
+            if(point.location.latitude>grid[j][k].topLeft[0] && point.location.latitude<grid[j][k].rightBottom[0] && point.location.longitude<grid[j][k].rightBottom[1]){                
+                console.log(no+" "+gridNo+" "+j+","+k);
+                return no+" "+gridNo+" "+j+","+k;
+                break;
+            }
+        }
+    }
+}    
+    
+function natya(csv){
+    allTextLines = csv.split(/\r\n|\n/);
+    console.log(allTextLines.length);
+    var lines = [];
+    var point;
+    for (var i=0; i<allTextLines.length; i++) {
+        lines = allTextLines[i].split(',');
+        point={location: { accuracy: 1, latitude: lines[0], longitude: lines[1] },timestamp: "", grid:""};
+        result.push(taniarza(i,point));
+    }
+}    
     
 $(document).ready(function() {    
     var gridSize=0.005;
@@ -420,50 +446,64 @@ $(document).ready(function() {
     
     $.ajax({
         type: "GET",
-        url: "argo_gps_join_12.csv",
+        url: "allpoint.csv",
         dataType: "text",
         success: function(data) {
-            var drawPointOrigin=true; //blue
-            var drawPointDestination=true; //green
-            
-            var mapOrigin=true;
-            var mapDestination=true;
-            
-            var drawCentroidOrigin=false; //blue   
-            var epsOrigin=0.2;
-            var minPtsOrigin=2;
-            var clusterColorOrigin="blue";
-            var drawPointRadiusOrigin=10;
-            
-            var drawCentroidDestination=false; //green
-            var epsDestination=0.2;
-            var minPtsDestination=2;
-            var clusterColorDestination="green";
-            var drawPointRadiusDestination=10;
-            
-            var when="2015-12-25";
-            
-            //read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
+           natya(data); 
+           for (var i=0; i<result.length; i++) {
+            $("#result").append(result[i]);  
+           }
         }
     });
     
-    $.ajax({
-        type: "GET",
-        url: "output_prefixspan.csv",
-        dataType: "text",
-        success: function(data) {
-           mapGridODPair(data); 
-        
-           //var centroidGrid=gridByNumber[0].centroidGrid.split(",");
-           //var circle = L.circle([centroidGrid[0], centroidGrid[1]], 5, { color: "red", fillColor: "red", fillOpacity: 1}).bindLabel().addTo(map);
-        }
-    });
+//    $.ajax({
+//        type: "GET",
+//        url: "output_prefixspan.csv",
+//        dataType: "text",
+//        success: function(data) {
+//           mapGridODPair(data); 
+//        
+//           //var centroidGrid=gridByNumber[0].centroidGrid.split(",");
+//           //var circle = L.circle([centroidGrid[0], centroidGrid[1]], 5, { color: "red", fillColor: "red", fillOpacity: 1}).bindLabel().addTo(map);
+//        }
+//    });
+    
+//    $.ajax({
+//        type: "GET",
+//        url: "argo_gps_join_12.csv",
+//        dataType: "text",
+//        success: function(data) {
+//            var drawPointOrigin=true; //blue
+//            var drawPointDestination=true; //green
+//            
+//            var mapOrigin=true;
+//            var mapDestination=true;
+//            
+//            var drawCentroidOrigin=false; //blue   
+//            var epsOrigin=0.2;
+//            var minPtsOrigin=2;
+//            var clusterColorOrigin="blue";
+//            var drawPointRadiusOrigin=10;
+//            
+//            var drawCentroidDestination=false; //green
+//            var epsDestination=0.2;
+//            var minPtsDestination=2;
+//            var clusterColorDestination="green";
+//            var drawPointRadiusDestination=10;
+//            
+//            var when="2015-12-25";
+//            
+//            //read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
+//        }
+//    });
+
 });
     
 </script> 
 </head>
 
 <body>
+    <div id='result'></div>  
     <div id='map'></div>  
 </body>
 </html>
