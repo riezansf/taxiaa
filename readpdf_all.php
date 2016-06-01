@@ -10,8 +10,8 @@ $noFile=1;
 $taxiSeq=1;
 $totalTrip=0;
 
-foreach(glob('7/*.*') as $file) {
-//foreach(glob('12/2015-12-05.pdf') as $file) {
+//foreach(glob('7/*.*') as $file) {
+foreach(glob('2015-12-01.pdf') as $file) {
     $reportDate=explode("-",substr($file,3,-4));
     echo $noFile++.". ".substr($file,3,-4)."<br><br>";
     
@@ -29,27 +29,40 @@ foreach(glob('7/*.*') as $file) {
         for($l=$begin[$i];$l>0;$l--){
             if(strpos($line[$l], 'COMPREHENSIVE OPERATION RECORDS') !== false){
                 $taxiNumber=substr(explode(" ",$line[$l+2])[0], -3);
+                $start=explode(" ",$line[$l+2])[4];
+                $end=explode(" ",$line[$l+2])[8];
+               
+                $startYear=substr(explode("-",$start)[0],-4);
+                $endYear=substr(explode("-",$end)[0],-4);
+                
+                $startDate=explode("-",$start)[2];
+                $endDate=explode("-",$end)[2];
+                
+                //echo "YEAR ".$startYear." ".$endYear."<br>"; echo "DATE ".$startDate." ".$endDate."<br>";
                 break;
             }
         }
-        
+                
         //search line-number-end of TRIP table, line which contain string "Tot."
         for($j=$begin[$i];$j<sizeof($line);$j++){
             if(strpos($line[$j], 'Tot.') !== false){
                 echo "#".$taxiSeq++." ".$begin[$i]."-".$j."<br>";
-                
                 for($k=$begin[$i]+2;$k<$j;$k++){ //Ignore 2 first line(Title & Table header)
-                   
-                    if(strpos($line[$k],'AA TaksiPage') === false and strpos($line[$k],'ANALYSIS')===false and strpos($line[$k],'No.')===false and $line[$k]!="") {  //ignore page-break line from previous
+                    if(
+                        ($startYear=="2015" || $endYear=="2015") and 
+                        strpos($line[$k],'AA TaksiPage') === false and 
+                        strpos($line[$k],'ANALYSIS')===false and 
+                        strpos($line[$k],'No.')===false and $line[$k]!=""
+                      ) {  //ignore page-break line from previous
                         $trip=explode(" ",trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $line[$k]))));
                         //printArray($trip);
 
                         //col 1
                         if($trip[0]!="--" and $trip[0]!=""){
                             $startEndTrip=explode(".",$trip[2]);
+                             //echo "check col1".$endDate." ".$startEndTrip[0]."<br>";
                             if(sizeof($startEndTrip)>1){ //if contain date
-                                
-                                //Handle different beetwen REPORT-DATE and HIRED-DATE/TRIP-DATE
+                                //Handle different date beetwen REPORT-DATE and HIRED-DATE/TRIP-DATE
                                 $diff=(ltrim($reportDate[2], '0')-$startEndTrip[0]); echo "diff ".$diff."<br>";
                                 if($diff!=0){ //if reportdate!=date in hired table
                                     if(!($diff>-7 && $diff<7)){ //if out of range (-7..7), can handle if report collected in 7 days latter/before
@@ -64,24 +77,29 @@ foreach(glob('7/*.*') as $file) {
                                 }else{
                                    $date="2015-".$reportDate[1]."-".sprintf("%02d", $startEndTrip[0]);
                                 }
-                                
                                 $startTrip=explode("-",$startEndTrip[1])[0];    
                                 $endTrip=explode("-",$startEndTrip[1])[1];    
                             }else{
-                                
                                 $startTrip=explode("-",$trip[2])[0];    
                                 $endTrip=explode("-",$trip[2])[1];  
                             }
-                          
-                            echo "(".$noTripPerCar++.") ".$date.",".$taxiNumber.",".$startTrip.",".$endTrip.",".$trip[3].",".str_replace(",","",$trip[4])."<br>";
-                            $totalTrip++;
-                            fputcsv($filecsv,[$date,$taxiNumber,$startTrip,$endTrip,$trip[3],str_replace(",","",$trip[4])],",","'");
 
+                            if(
+                                 ( ($startYear=="2015" && $endYear!="2015") && $endDate!=explode("-",$date)[2] ) or
+                                 ( ($startYear!="2015" && $endYear=="2015") && $startDate!=explode("-",$date)[2] ) or
+                                 ($startYear=="2015" && $endYear=="2015")
+                            ){
+                                echo "(".$noTripPerCar++.") ".$date.",".$taxiNumber.",".$startTrip.",".$endTrip.",".$trip[3].",".str_replace(",","",$trip[4])."<br>";
+                                $totalTrip++;
+                                fputcsv($filecsv,[$date,$taxiNumber,$startTrip,$endTrip,$trip[3],str_replace(",","",$trip[4])],",","'");
+                            }
+                            
                             //col 2 
                             if($trip[6]!="--" and $trip[6]!=""){
                                 $startEndTrip=explode(".",$trip[8]); 
+                                //echo "check col2".$endDate." ".$startEndTrip[0]."<br>";
                                 if(sizeof($startEndTrip)>1){
-
+                                     //echo "startEndTrip ".$startEndTrip[0]."<br>";
                                     //Handle different beetwen REPORT-DATE and HIRED-DATE/TRIP-DATE
                                     $diff=(ltrim($reportDate[2], '0')-$startEndTrip[0]); echo "diff ".$diff."<br>";
                                     if($diff!=0){ //if reportdate!=date in hired table
@@ -97,17 +115,22 @@ foreach(glob('7/*.*') as $file) {
                                     }else{
                                        $date="2015-".$reportDate[1]."-".sprintf("%02d", $startEndTrip[0]);
                                     } 
-                                    
+
                                     $startTrip=explode("-",$startEndTrip[1])[0];    
                                     $endTrip=explode("-",$startEndTrip[1])[1];    
                                 }else{
                                     $startTrip=explode("-",$trip[8])[0];    
                                     $endTrip=explode("-",$trip[8])[1];  
                                 }
-                               
-                                echo "(".$noTripPerCar++.") ".$date.",".$taxiNumber.",".$startTrip.",".$endTrip.",".$trip[9].",".str_replace(",","",$trip[10])."<br>";
-                                $totalTrip++;
-                                fputcsv($filecsv,[$date,$taxiNumber,$startTrip,$endTrip,$trip[9],str_replace(",","",$trip[10])],",","'");
+                                if(
+                                     ( ($startYear=="2015" && $endYear!="2015") && $endDate!=explode("-",$date)[2] ) or
+                                     ( ($startYear!="2015" && $endYear=="2015") && $startDate!=explode("-",$date)[2] ) or
+                                     ($startYear=="2015" && $endYear=="2015")
+                                ){
+                                    echo "(".$noTripPerCar++.") ".$date.",".$taxiNumber.",".$startTrip.",".$endTrip.",".$trip[9].",".str_replace(",","",$trip[10])."<br>";
+                                    $totalTrip++;
+                                    fputcsv($filecsv,[$date,$taxiNumber,$startTrip,$endTrip,$trip[9],str_replace(",","",$trip[10])],",","'");
+                                }
                             } // end if line not -- or blank for colum 2
                         } // end if line not -- or blank for colum 1
                     }//end if found page-break line from previous page
