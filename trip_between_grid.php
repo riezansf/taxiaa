@@ -48,21 +48,17 @@ var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBAN
   
 var allTextLines;    
     
-var originPoint=[];
-var destinationPoint=[];
+var originPoint=[]; // all origin point
+var destinationPoint=[]; // all destination point
    
-var centroidOrigin=[];
-var centroidDestination=[];
+var centroidOrigin=[]; //store origin point centroid in each grid if any
+var centroidDestination=[]; //store destination point centroid in each grid if any
     
 var grid=[];
 var gridByNumber=[];
     
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
-    
-var clusteredPoints;
-    
-var result=[];
     
 function buildMap(bandungCentroid){
     var start = new Date();
@@ -82,13 +78,12 @@ function drawBound(bound,color,weight,fillOpacity){
     map.fitBounds(bound);
     console.log("Draw bound time = "+(new Date() - start)+"ms");
 }
-        
-//=== GRID WITH RECTANGLE    
+          
 function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
     var start = new Date();
     var gridCount=0;
     var row=0; var col=0;
-    
+        
     for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
         if(grid[row]==null){grid[row]=[]}
         var k=bounds[0][1]; 
@@ -99,6 +94,7 @@ function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
             
             if(grid[row][col]==null){grid[row][col]=[];}
             
+            //Grid object, indexing by row,col
             grid[row][col]={
                 gridNumber : gridCount,
                 rectangle : rectangle,
@@ -111,6 +107,7 @@ function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
                 centroidGrid : midpoint(j,k,(j-gridSize).toFixed(12),(k+gridSize).toFixed(12))
             };
             
+            //Grid object, indexing by grid sequential number
             gridByNumber[gridCount]={
                 gridNumber : gridCount,
                 rectangle : rectangle,
@@ -226,8 +223,7 @@ function calculateCentroidDestination(drawCentroid){ 
     }
     var new_time = new Date();
     console.log("Calculate centroid destination time = "+(new_time - old_time)+" ms");
-    console.log("Total trip : "+destinationPoint.length+" , Active grid Destination:"+centroidDestination.length);
-          
+    console.log("Total trip : "+destinationPoint.length+" , Active grid Destination:"+centroidDestination.length);     
 }    
     
 function mapPointToGrid(point,OD){
@@ -262,22 +258,26 @@ function read_draw_count_data(csv,date,drawPointOrigin,drawPointDestination,mapO
     for (var i=0; i<allTextLines.length; i++) {
         var lines = allTextLines[i].split(',');
         if(date==""){ var whereDate=true; }else{ var whereDate=date; }
-        // 
         if(lines[1]==whereDate && lines[9]!="" && lines[14]!="" && lines[15]!="" && lines[8]!=null && lines[9]!=null && lines[14]!=null && lines[15]!=null){  //if coordinate !=""
             
+            //create point object
             var origin={location: { accuracy: 1, latitude: lines[8], longitude: lines[9] },timestamp: Math.round(new Date(lines[1]+" "+lines[2]).getTime()/1000), grid:""};
             var destination={location: { accuracy: 1, latitude: lines[14], longitude: lines[15] },timestamp: Math.round(new Date(lines[1]+" "+lines[3]).getTime()/1000), grid:""};
             
+            //store in global var
             originPoint.push(origin);
             destinationPoint.push(destination);
-                        
+            
+            //fill origin.grid.no to each point
             if(mapOrigin){ mapPointToGrid(origin,"origin"); }
             if(mapDestination){ mapPointToGrid(destination,"destination");}
             
+            //print gridOrigin-gridDestination pair
             if(origin.grid.no!=undefined && destination.grid.no!=undefined){
                 console.log(origin.grid.no+" -1 "+destination.grid.no+" -2");
             }
             
+            //draw point
             if(drawPointOrigin){ //origin point color is blue
                 var circle = L.circle([origin.location.latitude, origin.location.longitude], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(origin.grid.no+". "+origin.location.latitude+","+origin.location.longitude).addTo(map);
             }
@@ -343,69 +343,6 @@ function mapGridODPair(csv){
     console.log("Total Support ="+totalSupport);
 }      
        
-function dbscan(data,eps,minPts,timeEps,color,drawPointRadius){
-    var old_time = new Date();
-    var dbscan = jDBSCAN().eps(eps).minPts(minPts).distance('HAVERSINE').timeEps(timeEps).data(data);
-    var dbscanResult = dbscan();
-    var clusterCenters = dbscan.getClusters();
-    var clusterCount=[];
-   
-    var unclustered=0;
-    
-    //each point labeled with cluster number
-    for(var i=0; i<dbscanResult.length; i++){
-        if(clusterCount[dbscanResult[i]]==null){ clusterCount[dbscanResult[i]]=0; }
-        clusterCount[dbscanResult[i]]++;  
-        
-        if(clusteredPoints[dbscanResult[i]]==null){ clusteredPoints[dbscanResult[i]]=[]; }
-        clusteredPoints[dbscanResult[i]].push(data[i]); 
-        
-        if(dbscanResult[i]!=0){ 
-            if(color=="random"){
-                var drawColor=markerColors[dbscanResult[i]];
-            }else{
-                var drawColor=color;                               
-            }
-            
-            var date = new Date(data[i].timestamp*1000);
-            // Hours part from the timestamp
-            var hours = date.getHours();
-            // Minutes part from the timestamp
-            var minutes = "0" + date.getMinutes();
-            // Seconds part from the timestamp
-            var seconds = "0" + date.getSeconds();
-            var time = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-         
-            
-            var circle = L.circle([data[i].location.latitude, data[i].location.longitude], drawPointRadius, {
-                color: drawColor,
-                fillColor: drawColor,
-                fillOpacity: 1
-            }).bindLabel("Cluster number : "+dbscanResult[i]+"\nRecord no : "+i+"\nTime : "+time).addTo(map); 
-                
-             for(var j=0;j<grid.length;j++){
-                for(var k=0;k<grid[j].length;k++){                                       
-                    if(data[i].location.latitude>grid[j][k].topLeft[0] && data[i].location.latitude<grid[j][k].rightBottom[0] && data[i].location.longitude<grid[j][k].rightBottom[1]){
-                        //console.log(typeof(data[i].location.latitude)+">"+typeof(grid[j][k].topLeft[0]));  
-                        grid[j][k].rectangle.setStyle({fillColor:drawColor,fillOpacity:0.8});
-                        break;
-                    }
-                }
-            }         
-        }else{
-            unclustered++;
-        }       
-    }
-    console.log("\n== CLUSTERING ==");
-    console.log("Total point = "+ data.length);
-    console.log("Cluster summary = "+ clusterCount);
-    console.log("Cluster center (count) = "+ clusterCenters.length);
-    console.log("Clustered trip = "+ (data.length-clusterCount[0]) );
-    console.log("Unclustered trip = "+ clusterCount[0]);
-    var new_time = new Date();
-    console.log("Clustering time = "+(new_time - old_time)+" ms");
-}    
-    
 $(document).ready(function() {    
     var gridSize=0.005;
     var gridWeight=0.5; //Stroke width in pixels.
@@ -417,6 +354,39 @@ $(document).ready(function() {
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize,gridWeight,gridColor,gridFillOpacity);
     
+    //===== generating data for SPMF, format : originGridNumber -1 destinationGridNumber -2
+    //===== * -1 delimiter, -2 new line, output file : trip_between_grid.txt
+    //===== after data generated, run SPMF, result output_prefix_span.csv
+    $.ajax({
+        type: "GET",
+        url: "argo_gps_join_12.csv",
+        dataType: "text",
+        success: function(data) {
+            var drawPointOrigin=true; //blue
+            var drawPointDestination=true; //green
+            
+            var mapOrigin=true;
+            var mapDestination=true;
+            
+            var drawCentroidOrigin=false; //blue   
+            var epsOrigin=0.2;
+            var minPtsOrigin=2;
+            var clusterColorOrigin="blue";
+            var drawPointRadiusOrigin=10;
+            
+            var drawCentroidDestination=false; //green
+            var epsDestination=0.2;
+            var minPtsDestination=2;
+            var clusterColorDestination="green";
+            var drawPointRadiusDestination=10;
+            
+            var when="2015-12-25";
+            
+            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
+        }
+    });
+    
+//    //============== map prefixspan result with o-d arrow, line size related to trip count
 //    $.ajax({
 //        type: "GET",
 //        url: "output_prefixspan.csv",
@@ -424,37 +394,9 @@ $(document).ready(function() {
 //        success: function(data) {
 //           mapGridODPair(data); 
 //        
-//           //var centroidGrid=gridByNumber[0].centroidGrid.split(",");
-//           //var circle = L.circle([centroidGrid[0], centroidGrid[1]], 5, { color: "red", fillColor: "red", fillOpacity: 1}).bindLabel().addTo(map);
-//        }
-//    });
-    
-//    $.ajax({
-//        type: "GET",
-//        url: "argo_gps_join_12.csv",
-//        dataType: "text",
-//        success: function(data) {
-//            var drawPointOrigin=true; //blue
-//            var drawPointDestination=true; //green
-//            
-//            var mapOrigin=true;
-//            var mapDestination=true;
-//            
-//            var drawCentroidOrigin=false; //blue   
-//            var epsOrigin=0.2;
-//            var minPtsOrigin=2;
-//            var clusterColorOrigin="blue";
-//            var drawPointRadiusOrigin=10;
-//            
-//            var drawCentroidDestination=false; //green
-//            var epsDestination=0.2;
-//            var minPtsDestination=2;
-//            var clusterColorDestination="green";
-//            var drawPointRadiusDestination=10;
-//            
-//            var when="2015-12-25";
-//            
-//            //read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
+//           //test visualize grid centroid
+////           var centroidGrid=gridByNumber[0].centroidGrid.split(",");
+////           var circle = L.circle([centroidGrid[0], centroidGrid[1]], 5, { color: "red", fillColor: "red", fillOpacity: 1}).bindLabel().addTo(map);
 //        }
 //    });
 

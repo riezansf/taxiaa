@@ -156,27 +156,7 @@ function processData(allText) {
 //    console.log("Clustered trip = "+ (destinationPoint.length-clusterCountDestination[0]) );
 //    console.log("Unclustered trip = "+ clusterCountDestination[0]);
 //    var new_time = new Date();
-//    console.log("Clustering destination point = "+(new_time - old_time)+" ms");
-
-//=================== FOR ANIMATION
-//        var i = 0;                     //  set your counter to 1
-//        function myLoop () {           //  create a loop function
-//           setTimeout(function () {    //  call a 3s setTimeout when the loop is called
-//                  //map.removeLayer(marker); 
-//                marker = new L.Marker(new L.LatLng(lines[i][5], lines[i][4]), {
-//                    icon:	new L.NumberedDivIcon({number: i})
-//                });
-//                marker.addTo(map);
-//                
-//
-//                i++;                     //  increment the counter
-//                if (i < lines.length) {            //  if the counter < 10, call the loop function
-//                 myLoop();             //  ..  again which will trigger another 
-//                }                        //  ..  setTimeout()
-//           }, 100)
-//        }
-//        myLoop();                      //  start the loop
-    
+//    console.log("Clustering destination point = "+(new_time - old_time)+" ms");    
 }
 </script> 
 </body>

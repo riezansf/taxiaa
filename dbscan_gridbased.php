@@ -312,7 +312,7 @@ function dbscan(data,eps,minPts,color,drawPointRadius){
     
 $(document).ready(function() {    
     var gridSize=0.001;
-    var gridWeight=0.1; //Stroke width in pixels.
+    var gridWeight=0.5; //Stroke width in pixels.
     var gridColor="grey"; //Stroke color.
     var gridFillColor="grey";
     var gridFillOpacity=0.01;
@@ -347,10 +347,10 @@ $(document).ready(function() {
             var when="2015-12-25";
             
             //Rectangle gridbased dbscan
-            read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
+            //read_draw_count_data(data,when,drawPointOrigin,drawPointDestination,mapOrigin,mapDestination,bandungBounds,gridSize); 
             
-            calculateCentroidOrigin(drawCentroidOrigin); 
-            dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
+            //calculateCentroidOrigin(drawCentroidOrigin); 
+            //dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
               
     //            calculateCentroidDestination(drawCentroidDestination);    
     //            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);

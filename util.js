@@ -63,5 +63,22 @@ L.NumberedDivIcon = L.Icon.extend({
 	},
 	//you could change this to add a shadow like in the normal marker if you really wanted
 	createShadow: function () { return null;}
-});    
+}); 
+//=================== FOR ANIMATION
+//        var i = 0;                     //  set your counter to 1
+//        function myLoop () {           //  create a loop function
+//           setTimeout(function () {    //  call a 3s setTimeout when the loop is called
+//                  //map.removeLayer(marker); 
+//                marker = new L.Marker(new L.LatLng(lines[i][5], lines[i][4]), {
+//                    icon:	new L.NumberedDivIcon({number: i})
+//                });
+//                marker.addTo(map);
+//                
+//                i++;                     //  increment the counter
+//                if (i < lines.length) {            //  if the counter < 10, call the loop function
+//                 myLoop();             //  ..  again which will trigger another 
+//                }                        //  ..  setTimeout()
+//           }, 100)
+//        }
+//        myLoop();                      //  start the loop
     

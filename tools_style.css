@@ -1,0 +1,43 @@
+<style>
+    body { margin:0; padding:0; }
+    #map { position:fixed; top:0; bottom:0; width:100%; }
+    .leaflet-div-icon {
+        background: transparent;
+        border: none;
+    }
+
+    .leaflet-marker-icon .number{
+        position: relative;
+        top: -37px;
+        font-size: 12px;
+        width: 25px;
+        text-align: center;
+    }
+
+    html,body,.container, .sideBar, .content{ height: 100%; }
+
+    .container
+    {
+        margin-top: -50px;
+        padding-top: 50px;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+    .sideBar
+    {
+        float:left;
+        width: 200px;
+        overflow:hidden;
+    }
+    .content
+    {
+        overflow:hidden;
+    }
+
+    #footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+    }
+
+</style>
