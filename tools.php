@@ -24,12 +24,25 @@
 //0.001 point GPS = 109.5546875 Meter 
 //Grid size (Meter) 10 / 25 / 50 / 100 / 200
 var map;
+
 var originMarkers = new L.FeatureGroup();    
-var destinationMarkers = new L.FeatureGroup();    
+var destinationMarkers = new L.FeatureGroup();
+var odLine = new L.FeatureGroup();
+
+var originClusterMarkers = new L.FeatureGroup(); 
+var destinationClusterMarkers = new L.FeatureGroup(); 
     
 var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
+
+// Variable for map
+var gridSize=0.001;
+var gridWeight=0.1; //Stroke width in pixels.
+var gridColor="grey"; //Stroke color.
+var gridFillColor="grey";
+var gridFillOpacity=0.01;
+var gridClassName="";
 
 var data=[];    
         
@@ -215,21 +228,30 @@ function calculateCentroidDestination(drawCentroid){
           
 }    
     
-function draw_count_data(data,drawPointOrigin,drawPointDestination){
+function load_draw_data(data){
     var old_time = new Date();
     for (var i=0; i<data.length; i++) {
         originPoint.push({location: { accuracy: 1, latitude: data[i].pickup_loc_2_lat, longitude: data[i].pickup_loc_2_long }});
         destinationPoint.push({location: { accuracy: 1, latitude: data[i].dropoff_loc_2_lat, longitude: data[i].dropoff_loc_2_long }});
 
-        if(drawPointOrigin){ //origin point color is blue
-            var circle = L.circle([data[i].pickup_loc_2_lat,data[i].pickup_loc_2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(originPoint.length+". "+data[i].pickup_loc_2_lat+","+data[i].pickup_loc_2_long);
-             originMarkers.addLayer(circle);
-        }
-        if(drawPointDestination){ //destination point color is green
-            var circle = L.circle([data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(destinationPoint.length+". "+data[i].dropoff_loc_2_lat+","+data[i].dropoff_loc_2_long);
-             destinationMarkers.addLayer(circle);
-        }
-
+        //origin point color is blue
+        var circle = L.circle([data[i].pickup_loc_2_lat,data[i].pickup_loc_2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(originPoint.length+". "+data[i].pickup_loc_2_lat+","+data[i].pickup_loc_2_long);
+        originMarkers.addLayer(circle);
+        
+        //destination point color is green
+        var circle = L.circle([data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(destinationPoint.length+". "+data[i].dropoff_loc_2_lat+","+data[i].dropoff_loc_2_long);
+        destinationMarkers.addLayer(circle);
+        
+        //Draw line origin point to destintion
+        var polyline = L.polyline(
+            [new L.LatLng(data[i].pickup_loc_2_lat,data[i].pickup_loc_2_long),new L.LatLng(data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long)], 
+            {
+                color: 'red',
+                weight: 1
+            }
+        );
+        odLine.addLayer(polyline);
+        
 //            if(mapOrigin){
 //                mapPointToGrid(data[8],data[9],"origin");
 //            }
@@ -238,15 +260,20 @@ function draw_count_data(data,drawPointOrigin,drawPointDestination){
 //            }
         
     }
+    
+    map.addLayer(originMarkers);
+    map.addLayer(destinationMarkers);
+    map.addLayer(odLine);
+    
     var new_time = new Date();
     console.log("\nTime to read data, draw point, & map to grid = "+(new_time - old_time)+" ms");
     console.log("Origin point "+originPoint.length+" , Destination point : "+destinationPoint.length);
     //console.log("Origin point mapped to grid : "+pointMappedToGridO+" , Destination point mapped to grid : "+pointMappedToGridD);
 }   
        
-function dbscan(data,eps,minPts,color,drawPointRadius){
+function dbscan(data,eps,minPts,color,drawPointRadius,OD){
     var old_time = new Date();
-    var dbscan = jDBSCAN().eps(eps).minPts(minPts).distance('HAVERSINE').data(data);
+    var dbscan = jDBSCAN().eps(parseFloat(eps)).minPts(parseInt(minPts)).distance('HAVERSINE').data(data);
     var dbscanResult = dbscan();
     var clusterCenters = dbscan.getClusters();
     var clusterCount=[];
@@ -258,27 +285,28 @@ function dbscan(data,eps,minPts,color,drawPointRadius){
         clusterCount[dbscanResult[i]]++;  
         
         if(dbscanResult[i]!=0){ 
-            if(color=="random"){
-                var drawColor=markerColors[dbscanResult[i]];
-            }else{
-                var drawColor=color;                               
-            }
+            if(color=="random"){ var drawColor=markerColors[dbscanResult[i]]; }else{ var drawColor=color; }
+            
+            //var drawColor=color;
             
             var circle = L.circle([data[i].location.latitude, data[i].location.longitude], drawPointRadius, {
                 color: drawColor,
                 fillColor: drawColor,
                 fillOpacity: 1
             }).bindLabel("Cluster number : "+dbscanResult[i]+"\nRecord no : "+i).addTo(map); 
-                
-             for(var j=0;j<grid.length;j++){
-                for(var k=0;k<grid[j].length;k++){                                       
-                    if(data[i].location.latitude>grid[j][k].topLeft[0] && data[i].location.latitude<grid[j][k].rightBottom[0] && data[i].location.longitude<grid[j][k].rightBottom[1]){
-                        //console.log(typeof(data[i].location.latitude)+">"+typeof(grid[j][k].topLeft[0]));  
-                        grid[j][k].rectangle.setStyle({fillColor:drawColor,fillOpacity:0.5});
-                        break;
-                    }
-                }
-            }         
+            
+            if(OD="origin"){ originClusterMarkers.addLayer(circle); }else{ destinationClusterMarkers.addLayer(circle); }
+            
+//            //grid coloring
+//            for(var j=0;j<grid.length;j++){
+//                for(var k=0;k<grid[j].length;k++){                                       
+//                    if(data[i].location.latitude>grid[j][k].topLeft[0] && data[i].location.latitude<grid[j][k].rightBottom[0] && data[i].location.longitude<grid[j][k].rightBottom[1]){
+//                        //console.log(typeof(data[i].location.latitude)+">"+typeof(grid[j][k].topLeft[0]));  
+//                        grid[j][k].rectangle.setStyle({fillColor:drawColor,fillOpacity:0.5});
+//                        break;
+//                    }
+//                }
+//            }         
         }else{
             unclustered++;
         }       
@@ -299,15 +327,7 @@ $(document).ready(function() {
         minDate : '2015-12-1',
         maxDate : '2015-12-31'
     });
-    
-    // Variable for map
-    var gridSize=0.001;
-    var gridWeight=0.1; //Stroke width in pixels.
-    var gridColor="grey"; //Stroke color.
-    var gridFillColor="grey";
-    var gridFillOpacity=0.01;
-    var gridClassName="";
-    
+            
     var drawPointOrigin=true; //blue
     var drawPointDestination=true; //green
 
@@ -316,68 +336,89 @@ $(document).ready(function() {
 
     //Variable for grid & cluster
     var drawCentroidOrigin=false; //blue   
-    var epsOrigin=0.2;
-    var minPtsOrigin=2;
-    var clusterColorOrigin="blue";
+    var colorOrigin="random";
     var drawPointRadiusOrigin=10;
 
     var drawCentroidDestination=false; //green
-    var epsDestination=0.2;
-    var minPtsDestination=2;
-    var clusterColorDestination="green";
+
+    var colorDestination="random";
     var drawPointRadiusDestination=10;
 
     buildMap(bandungCentroid);
-    //drawGridRectangle(bandungBounds,gridSize,gridWeight,gridColor,gridFillOpacity);
        
     $("#loadData").click(function(){
+        //originMarkers= new L.FeatureGroup();   
+        //destinationMarkers= new L.FeatureGroup();   
+        
+        //map.removeLayer(originMarkers);
+        //map.removeLayer(destinationMarkers);
+        
         $.getJSON("tools_load_data.php",{
             startPeriod : $("#startPeriod").val(),
             endPeriod : $("#endPeriod").val()
         },
         function(data, status){
+            $("#dataLoaded").show();
+            $("#footer").show();
+            $("#clustering").attr("disabled",false);
+            
             $.each(data, function (index, value) {
                 data[index]=value;
             });
+        
+            load_draw_data(data); 
+        
+            //Filter
+            $("#fOriginMarkers").change(function(){
+                if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
+            });
+            $("#fDestinationMarkers").change(function(){
+                if(this.checked) { map.addLayer(destinationMarkers); }else{ map.removeLayer(destinationMarkers); }
+            });
+        });  
+    });
+    
+    $("#clustering").click(function(){
+         //validate inputText
+         
+        if($("#gridSize").val()==""){
+            //==== Non gridbased dbscan
+            map.removeLayer(originMarkers);
+            map.removeLayer(destinationMarkers);
             
-            map.addLayer(originMarkers);
-            map.addLayer(destinationMarkers);
+            dbscan(originPoint,$("#eps").val(),$("#minpts").val(),colorOrigin,10,"origin");
+            //dbscan(destinationPoint,$("#eps").val(),$("#minpts").val(),colorDestination,10,"destiation");
+        }else{
+            //drawGridRectangle(bandungBounds,gridSize,gridWeight,gridColor,gridFillOpacity);
             
-            //Rectangle gridbased dbscan
-            draw_count_data(data,drawPointOrigin,drawPointDestination); 
-
             //calculateCentroidOrigin(drawCentroidOrigin); 
             //dbscan(centroidOrigin,epsOrigin,minPtsOrigin,clusterColorOrigin,drawPointRadiusOrigin);
-
-        //            calculateCentroidDestination(drawCentroidDestination);    
-        //            dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
-        //        
-
-            //==== Non gridbased dbscan
-        //            dbscan(originPoint,0.2,5,clusterColorOrigin,10);
-        //            dbscan(destinationPoint,0.2,5,clusterColorDestination,10);
-
-    
             
-            //console.log(data);
-        });
+            //calculateCentroidDestination(drawCentroidDestination);    
+            //dbscan(centroidDestination,epsDestination,minPtsDestination,clusterColorDestination,drawPointRadiusDestination);
+        } 
+         
+        $("#filterLoadData").hide();
+        $("#filterClusteringResult").show();
         
-//        $.ajax({
-//          type: "GET",
-//          dataType: "json",
-//          url: "tools_load_data.php",
-//          data: { limit: 20 },
-//          success: function( response ) {       
-//              response=jQuery.parseJSON(response);
-//              console.log(response);
-//          },
-//          error: function( error ){
-//             alert( error );
-//          }
-//       });
-    });
-});
+        $("#fOriginCluterMarkers").change(function(){
+            if(this.checked && $("#fDestinationCluterMarkers").is(':checked')){
+                //blue & green
+            }else{
+                //random color
+            }
+        }); 
+
+         $("#fDestinationCluterMarkers").change(function(){
+            if(this.checked && $("#fOriginCluterMarkers").is(':checked')){
+                //blue & green
+            }else{
+                //random color
+            }
+        }); 
+     });
     
+});
 </script> 
 </head>
 
@@ -397,28 +438,27 @@ $(document).ready(function() {
                 <input type="checkbox" name="sore" value="sore" checked="true"> Sore <br>
                 <input type="checkbox" name="malam " value="malam" checked="true"> Malam <br>
                 <input type="checkbox" name="dinihari" value="dinihari" checked="true"> Dini Hari <br>
-                <input type="button" id="loadData" value="Load Data"><br>
-                <div id="dataLoaded" hidden="true"> Data Loaded!</div>
+                <input type="button" id="loadData" value="Load Data"><div id="dataLoaded" hidden> >> Data Loaded!</div>
             </div>
             <hr>
             <div id="dbscan">
-                <b>DBSCAN Clustering</b><br>
-                Eps : <input type="text" id="eps" class=""><br>
-                Min Pts : <input type="text" id="minpts" class=""><br>
+                <b>Preprocessing</b><br>
+                Eps : <input type="text" id="eps" class="" value="0.2"><br>
+                Min Pts : <input type="text" id="minpts" class="" value="3"><br>
                 Grid Size : 
-                <select>
-                  <option value="no">Tanpa Grid</option>
+                <select id="gridSize">
+                  <option value="">Tanpa Grid</option>
                   <option value="50">50 Meter</option>
                   <option value="100">100 Meter</option>
                   <option value="200">200 Meter</option>
                   <option value="500">500 Meter</option>
                 </select>
                 <br>
-                >> OD Cluster generated!
+                <input type="button" id="clustering" value="Process" disabled><div id="dataLoaded" hidden> Cluster Generated!</div>
             </div>
             <hr>
             <div id="sp">
-                <b>Sequential Pattern Mining</b><br>
+                <b>Clustering</b><br>
                 Type :
                 <select>
                   <option value="gridToGrid">Grid to Grid</option>
@@ -440,7 +480,23 @@ $(document).ready(function() {
         </div>
         <div class="content">
             <div id="map"> </div>
-            <div id="footer">Footer - Just scroll...<br><br><br><br></div>
+            <div id="footer" hidden>
+                <div id="toggle">Toggle<br></div>
+                
+                <b>Filter</b><br>
+                Show Hide<br>
+                
+                <div id="filterLoadData">
+                    <input type="checkbox" id="fOriginMarkers" value="originMarkers" checked="true"> Origin Marker <br>
+                    <input type="checkbox" id="fDestinationMarkers" value="destinationMarkers" checked="true"> Destination Marker <br>
+                </div>
+                
+                <div id="filterClusteringResult" hidden>
+                    <input type="checkbox" id="fOriginCluterMarkers" value="originCluterMarkers" checked="true"> Origin Cluter Marker <br>
+                    <input type="checkbox" id="fOdestinationCluterMarkers" value="destinationCluterMarkers" checked="true"> Destination Cluter Marker <br>
+                </div>
+                
+            </div>
         </div>  
     </div>
 </body>
