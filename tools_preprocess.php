@@ -57,16 +57,15 @@ var pointMappedToGridD=0;
 var styleGrid={weight:0.5, color:'grey',fillColor:'grey',fillOpacity:0.01};
 var styleSelectedGrid={weight:0.5, color:'red', fillColor:'red', fillOpacity:0.3};
 function styleGridRandom(id){
-    //var style=
-    return { weight:0.5, color:htmlColor[id], fillColor:htmlColor[id], fillOpacity:0.3};
+    return { weight:0.5, color:markerColors[id], fillColor:markerColors[id], fillOpacity:0.5};
 }
     
 function buildMap(bandungCentroid){
     var start = new Date();
-    map = L.map('map').setView(bandungCentroid, 14);
+    map = L.map('map').setView(bandungCentroid, 15);
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-        maxZoom: 18,
+        maxZoom: 19,
         id: 'laezano.18b09133',
         accessToken: 'pk.eyJ1IjoibGFlemFubyIsImEiOiIxYzMzNmJmOTdjY2M4MmI5N2U2ZWI1ZjYyZTYyZGVmNCJ9.-VDDMhYojWz8ghvMftCkcw'
     }).addTo(map);
@@ -298,7 +297,7 @@ function load_draw_data(data){
                 weight: 1
             }
         );
-        odLine.addLayer(polyline);
+        //odLine.addLayer(polyline);
         
 //        if(mapOrigin){ mapPointToGrid(data[8],data[9],"origin"); }
 //        if(mapDestination){ mapPointToGrid(data[14],data[15],"destination");
@@ -399,13 +398,39 @@ $(document).ready(function() {
                     "</tr>");
                 grid=data[i].id.split(",");
                 for(var j=0;j<grid.length;j++){   
-                    console.log(styleGridRandom[i]);
-                    gridId[grid[j]].rectangle.setStyle(styleGridRandom[i]);
+                    //console.log(styleGridRandom[i]);
+                    gridId[grid[j]].rectangle.setStyle(styleGridRandom(i));
                 }
             }
         }
     );
     
+    $.getJSON("tools_preprocess_data.php",{
+            req : "getData",
+            startPeriod : "2015-12-01",
+            endPeriod : "2015-12-15"
+        },
+        function(data, status){
+            $("#loadData").attr("value","Data loaded!");
+            $("#footer").show();
+            $("#clustering").attr("disabled",false);
+
+            $.each(data, function (index, value) { data[index]=value; });
+
+            load_draw_data(data); 
+
+            //Filter
+            $("#fOriginMarkers").change(function(){
+                if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
+            });
+            $("#fDestinationMarkers").change(function(){
+                if(this.checked) { map.addLayer(destinationMarkers); }else{ map.removeLayer(destinationMarkers); }
+            });
+             $("#fOdLine").change(function(){
+                if(this.checked) { map.addLayer(odLine); }else{ map.removeLayer(odLine); }
+            });
+        }
+    ); 
     $("#loadData").click(function(){
         $("#loadData").attr("disabled","true");
 
@@ -515,12 +540,9 @@ $(document).ready(function() {
         }
         else if(editButton.attr("value")=="Done"){    
             //reset colored grid
-            
+    
             enableSelectGrid(false); //disable selcect grid
-            
-//            console.log(selectedGrid.toString());
-//            console.log($(this).parent().prev().children().val());
-            
+                    
             //ajax to save selected grid with typed name
             //check duplicate area name
             $.ajax({
@@ -551,22 +573,37 @@ $(document).ready(function() {
 });
 </script> 
 </head>
-
 <body>
     <div class="container">    
         <div class="sideBar">
             <div id="chooseData">
                 <b>Choose Data</b><br>
-                Start : <input type="text" id="startPeriod" class="date" value="2015-12-01" size=12><br>
-                End : <input type="text" id="endPeriod" class="date" value="2015-12-02" size=12><br>
-                <input type="button" id="loadData" value="Load Data">
+                <table>
+                    <tr>
+                        <td>Start</td><td>: <input type="text" id="startPeriod" class="date" value="2015-12-01" size=12></td>
+                    </tr>
+                    <tr>
+                        <td>End</td><td>: <input type="text" id="startPeriod" class="date" value="2015-12-01" size=12></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><input type="button" id="loadData" value="Load Data"></td>
+                    </tr>
+                </table>
             </div>
             <hr>
             <div id="dbscan">
                 <b>Find Cluster (DBSCAN)</b><br>
-                Eps : <input type="text" id="eps" class="" value="0.2" size=5><br>
-                Min Pts : <input type="text" id="minpts" class="" value="3" size=5><br>
-                <input type="button" id="clustering" value="Process" disabled><div id="tClusterGenerated" hidden> >> Cluster Generated!</div>
+                 <table>
+                    <tr>
+                        <td>Eps</td><td>: <input type="text" id="eps" class="" value="0.2" size=5></td>
+                    </tr>
+                    <tr>
+                        <td>Min Pts</td><td>: <input type="text" id="minpts" class="" value="3" size=5></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><input type="button" id="clustering" value="Process" disabled></td>
+                    </tr>
+                </table>
             </div>
             <hr>
             <div id="sp">

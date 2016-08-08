@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password=""; $database="aataksi";
+    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -44,7 +44,7 @@
             case "update":
                 $result=mysql_query("UPDATE GRID_AREA SET AREA_NAME=NULL WHERE ID IN(".$_GET["oldGrid"].")");
                 $result1=mysql_query("UPDATE GRID_AREA SET AREA_NAME='".$_GET["areaName"]."' WHERE ID IN(".$_GET["grid"].")");
-                echo ($result && $result1);
+                echo ($result1);
                 break;
 //            case "generateGrid" : 
 //                $row=$_GET['row'];
@@ -53,6 +53,7 @@
 //                }
 //                //print_r($result);
 //                break;
+            default : break;
         }
     }
     
