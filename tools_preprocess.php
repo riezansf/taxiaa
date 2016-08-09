@@ -13,6 +13,7 @@
     <script src="Leaflet.label/Path.Label.js"></script>
     <script type="text/javascript" src="jDBSCAN/jDBSCAN.js"></script>
     <script src="util.js"></script> 
+    <script src="randomColor.js"></script> 
     
     <link rel="stylesheet" href="leaflet/leaflet.css" />
     <link rel="stylesheet" href="tools_style.css" />
@@ -55,14 +56,14 @@ var pointMappedToGridO=0;
 var pointMappedToGridD=0;
 
 var styleGrid={weight:0.5, color:'grey',fillColor:'grey',fillOpacity:0.01};
-var styleSelectedGrid={weight:0.5, color:'red', fillColor:'red', fillOpacity:0.3};
-function styleGridRandom(id){
-    return { weight:0.5, color:markerColors[id], fillColor:markerColors[id], fillOpacity:0.5};
+var styleSelectedGrid={weight:0.5, color:'red', fillColor:'red', fillOpacity:0.8};
+function getStyleGrid(color){
+    return { weight:0.5, color:color, fillColor:color, fillOpacity:0.6};
 }
     
 function buildMap(bandungCentroid){
     var start = new Date();
-    map = L.map('map').setView(bandungCentroid, 15);
+    map = L.map('map').setView(bandungCentroid, 14);
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         maxZoom: 19,
@@ -178,6 +179,20 @@ function mapPointToGrid(lat,long,OD){
     }
 }
     
+function getGridId(lat,long){
+    // Get grid ID & lookup area name
+    // update table argo_gps_join :
+    // pickup_grid_id
+    // pickup_area_name
+    // dropoff_grid_id
+    // dropoff_area_name
+    for(var j=0;j<gridId.length;j++){
+        if(lat>gridId[j].topLeft[0] && lat<grid[j].rightBottom[0] && long<grid[j].rightBottom[1]){
+            return j;       
+        }
+    }
+}    
+    
 function calculateCentroidOrigin(drawCentroid){
     var singleCentroid=0;
     
@@ -226,54 +241,7 @@ function calculateCentroidOrigin(drawCentroid){
     console.log("\nCalculate centroid origin time = "+(new_time - old_time)+" ms");
     console.log("Active grid (centroid) Origin : "+centroidOrigin.length);
     console.log("1 point in 1 grid Origin : "+singleCentroid);
-} 
-    
-function calculateCentroidDestination(drawCentroid){
-    var old_time = new Date();;
-    for(var i=0;i<grid.length;i++){
-        for(var j=0;j<grid[i].length;j++){     
-                    
-            //console.log(grid[i][j].destination);
-            if(grid[i][j].destination.length>1){
-                var latXTotal = 0;
-                var latYTotal = 0;
-                var lonDegreesTotal = 0;
-                for(var k=0;k<grid[i][j].destination.length;k++){
-                    var latDegrees = parseFloat(grid[i][j].destination[k].location.latitude);
-                    var lonDegrees = parseFloat(grid[i][j].destination[k].location.longitude);
-                    
-                    var latRadians = Math.PI * latDegrees / 180;
-                    latXTotal += Math.cos(latRadians);
-                    latYTotal += Math.sin(latRadians);
-
-                    lonDegreesTotal = lonDegreesTotal+lonDegrees;
-                }
-                var finalLatRadians = Math.atan2(latYTotal, latXTotal);
-                var finalLatDegrees = finalLatRadians * 180 / Math.PI;
-                var finalLonDegrees = lonDegreesTotal / grid[i][j].destination.length;
-            
-                grid[i][j].centroidDestination.push({location: { accuracy: 1, latitude: finalLatDegrees.toString(), longitude: finalLonDegrees.toString() }});
-                centroidDestination.push({location: { accuracy: 1, latitude: finalLatDegrees.toString(), longitude: finalLonDegrees.toString() }});
-                
-                //Centroid is solid RED
-                if(drawCentroid){
-                    var circle = L.circle([finalLatDegrees, finalLonDegrees], 5, { color: "green", fillColor: "green", fillOpacity: 1}).addTo(map);
-                }
-            }
-            else if(grid[i][j].destination.length==1){
-                grid[i][j].centroidDestination.push({ location: { accuracy: 1, latitude: grid[i][j].destination[0].location.latitude, longitude: grid[i][j].destination[0].location.longitude }});
-                centroidDestination.push({location: { accuracy: 1, latitude: grid[i][j].destination[0].location.latitude, longitude: grid[i][j].destination[0].location.longitude }}); 
-                if(drawCentroid){
-                    var circle = L.circle([grid[i][j].destination[0].location.latitude, grid[i][j].destination[0].location.longitude ], 5, { color: "blue", fillColor: "blue", fillOpacity: 0.5}).addTo(map);
-                } 
-            }
-        }
-    }
-    var new_time = new Date();
-    console.log("Calculate centroid destination time = "+(new_time - old_time)+" ms");
-    console.log("Total trip : "+destinationPoint.length+" , Active grid Destination:"+centroidDestination.length);
-          
-}    
+}     
     
 function load_draw_data(data){
     var old_time = new Date();
@@ -365,72 +333,32 @@ function dbscan(data,eps,minPts,color,drawPointRadius,OD){
 $(document).ready(function() { 
     $(".date").datepicker({ dateFormat: 'yy-mm-dd', minDate : '2015-12-1', maxDate : '2015-12-31'});
             
-    var drawPointOrigin=true; //blue
-    var drawPointDestination=true; //green
-
-    var mapOrigin=true;
-    var mapDestination=true;
-
-    //Variable for grid & cluster
-    var drawCentroidOrigin=false; 
-    var colorOrigin="blue"; //blue or random   
-    var drawPointRadiusOrigin=10;
-
-    var drawCentroidDestination=false; 
-    var colorDestination="green"; //green or random
-    var drawPointRadiusDestination=10;
-
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
        
     $.getJSON("tools_preprocess_data.php",{ req : "getArea"},
         function(data, status){
             $.each(data, function (index, value) { data[index]=value; });
-            var no; var grid;
+            var no; var grid; var color;
             for (var i=0; i<data.length; i++){
                 no=(i+1);
+                color=randomColor();
                 $("#tableArea tbody").append(
-                    "<tr id='rowArea"+no+"' grid='"+data[i].id+"'>"+
+                    "<tr id='rowArea"+no+"' grid='"+data[i].id+"' color='"+color+"'>"+
                         "<td class='areaNum'>"+no+"</td>"+
                         "<td><input type='text' name='area[]' class='area' size=\"10\" value='"+data[i].area_name+"'></td>"+
                         "<td><input type='button' name='editArea[]' class='editArea' value='Edit'></td>"+
                         "<td><input type='button' name='deleteArea[]' class='deleteArea' value='X'></td>"+
                     "</tr>");
                 grid=data[i].id.split(",");
+                
                 for(var j=0;j<grid.length;j++){   
-                    //console.log(styleGridRandom[i]);
-                    gridId[grid[j]].rectangle.setStyle(styleGridRandom(i));
+                    gridId[grid[j]].rectangle.setStyle(getStyleGrid(color));
                 }
             }
         }
     );
     
-    $.getJSON("tools_preprocess_data.php",{
-            req : "getData",
-            startPeriod : "2015-12-01",
-            endPeriod : "2015-12-15"
-        },
-        function(data, status){
-            $("#loadData").attr("value","Data loaded!");
-            $("#footer").show();
-            $("#clustering").attr("disabled",false);
-
-            $.each(data, function (index, value) { data[index]=value; });
-
-            load_draw_data(data); 
-
-            //Filter
-            $("#fOriginMarkers").change(function(){
-                if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
-            });
-            $("#fDestinationMarkers").change(function(){
-                if(this.checked) { map.addLayer(destinationMarkers); }else{ map.removeLayer(destinationMarkers); }
-            });
-             $("#fOdLine").change(function(){
-                if(this.checked) { map.addLayer(odLine); }else{ map.removeLayer(odLine); }
-            });
-        }
-    ); 
     $("#loadData").click(function(){
         $("#loadData").attr("disabled","true");
 
@@ -503,7 +431,7 @@ $(document).ready(function() {
     $("#addArea").click(function(){
         var no = $("#tableArea tr").length+1;
         var newAreaDom=
-            "<tr id='rowArea"+no+"' grid=''>"+
+            "<tr id='rowArea"+no+"' grid='' color=''>"+
                 "<td class='areaNum'>"+no+"</td>"+
                 "<td><input type='text' name='area[]' class='area' size=\"10\" value=''></td>"+
                 "<td><input type='button' name='editArea[]' class='editArea' value='Edit'></td>"+
@@ -521,8 +449,9 @@ $(document).ready(function() {
         enableSelectGrid(false);
     });
     
-    $(document).on("focusout", ".area", function(){ //un-highlight grid
-        setStyleSelectedArea($(this),styleGrid);
+    $(document).on("focusout", ".area", function(){ //un-highlight grid 
+        //set style acording index position in table
+        setStyleSelectedArea($(this),getStyleGrid($(this).parent().parent().attr("color")));
         enableSelectGrid(false);
     });
     
@@ -530,11 +459,11 @@ $(document).ready(function() {
         var editButton=$(this);
         var oldGrid=editButton.parent().parent().attr("grid").split(",");
         
-        if(editButton.attr("value")=="Edit"){
+        if(editButton.attr("value")=="Edit"){ //selecting grid
             editButton.attr("value","Done");
             $("#addArea").attr("disabled",true); //disable add area while selecting grid   
             
-            if(oldGrid.length>0){setStyleSelectedArea(editButton,styleSelectedGrid);}
+            if(oldGrid.length>0){setStyleSelectedArea(editButton,styleSelectedGrid);} //show old selected grid
         
             enableSelectGrid(true); //enable to select grid
         }
@@ -543,8 +472,6 @@ $(document).ready(function() {
     
             enableSelectGrid(false); //disable selcect grid
                     
-            //ajax to save selected grid with typed name
-            //check duplicate area name
             $.ajax({
                 type: "GET",
                 url: "tools_preprocess_data.php",
@@ -559,16 +486,15 @@ $(document).ready(function() {
                     
                     $("#addArea").attr("disabled",false); //enable add area
                     editButton.attr("value","Edit");
-                    setStyleSelectedArea(editButton,styleSelectedGrid);
-                    //set <tr gird="">
-                },
-                failure: function(errMsg) {
+                    var color=randomColor();
+                    setStyleSelectedArea(editButton,getStyleGrid(color));
                     
-                }
+                    //set <tr gird="">
+                    editButton.parent().parent().attr("grid",oldGrid.concat(selectedGrid));
+                },
+                failure: function(errMsg) { alert (errMsg);}
             });
-        }
-        
-             
+        }     
     });
 });
 </script> 
@@ -580,10 +506,10 @@ $(document).ready(function() {
                 <b>Choose Data</b><br>
                 <table>
                     <tr>
-                        <td>Start</td><td>: <input type="text" id="startPeriod" class="date" value="2015-12-01" size=12></td>
-                    </tr>
-                    <tr>
-                        <td>End</td><td>: <input type="text" id="startPeriod" class="date" value="2015-12-01" size=12></td>
+                        <td>Period</td>
+                        <td>
+                            : <input type="text" id="startPeriod" class="date" value="2015-12-01" size=12> - <input type="text" id="endPeriod" class="date" value="2015-12-02" size=12>
+                        </td>
                     </tr>
                     <tr>
                         <td colspan="2"><input type="button" id="loadData" value="Load Data"></td>
@@ -595,10 +521,11 @@ $(document).ready(function() {
                 <b>Find Cluster (DBSCAN)</b><br>
                  <table>
                     <tr>
-                        <td>Eps</td><td>: <input type="text" id="eps" class="" value="0.2" size=5></td>
-                    </tr>
-                    <tr>
-                        <td>Min Pts</td><td>: <input type="text" id="minpts" class="" value="3" size=5></td>
+                        <td>
+                            Eps : <input type="text" id="eps" class="" value="0.2" size=5>&nbsp;
+                            Min Pts : <input type="text" id="minpts" class="" value="3" size=5>
+                        </td>
+                        <td></td>
                     </tr>
                     <tr>
                         <td colspan="2"><input type="button" id="clustering" value="Process" disabled></td>
