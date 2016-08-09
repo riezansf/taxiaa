@@ -34,7 +34,7 @@ var odLine = new L.FeatureGroup();
 var originClusterMarkers = new L.FeatureGroup(); 
 var destinationClusterMarkers = new L.FeatureGroup(); 
     
-var bandungCentroid=[-6.914744, 107.609810];
+var bandungCentroid=[-6.854744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
 
@@ -257,15 +257,15 @@ function load_draw_data(data){
         var circle = L.circle([data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(destinationPoint.length+". "+data[i].dropoff_loc_2_lat+","+data[i].dropoff_loc_2_long);
         destinationMarkers.addLayer(circle);
         
-        //Draw line origin point to destintion
-        var polyline = L.polyline(
-            [new L.LatLng(data[i].pickup_loc_2_lat,data[i].pickup_loc_2_long),new L.LatLng(data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long)], 
-            {
-                color: 'red',
-                weight: 1
-            }
-        );
-        //odLine.addLayer(polyline);
+//        //Draw line origin point to destintion
+//        var polyline = L.polyline(
+//            [new L.LatLng(data[i].pickup_loc_2_lat,data[i].pickup_loc_2_long),new L.LatLng(data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long)], 
+//            {
+//                color: 'red',
+//                weight: 1
+//            }
+//        );
+//        odLine.addLayer(polyline);
         
 //        if(mapOrigin){ mapPointToGrid(data[8],data[9],"origin"); }
 //        if(mapDestination){ mapPointToGrid(data[14],data[15],"destination");
@@ -389,6 +389,7 @@ $(document).ready(function() {
             }
         );  
     });
+    //$("#loadData").click();
     
     $("#clustering").click(function(){
         $("#clustering").attr("disabled","true");
@@ -508,7 +509,7 @@ $(document).ready(function() {
                     <tr>
                         <td>Period</td>
                         <td>
-                            : <input type="text" id="startPeriod" class="date" value="2015-12-01" size=12> - <input type="text" id="endPeriod" class="date" value="2015-12-02" size=12>
+                            : <input type="text" id="startPeriod" class="date" value="2015-12-1" size=12> - <input type="text" id="endPeriod" class="date" value="2015-12-31" size=12>
                         </td>
                     </tr>
                     <tr>

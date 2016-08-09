@@ -27,6 +27,7 @@ html,body,.container, .sideBar, .content{ height: 100%; }
 {
     float:left;
     width: 270px;
+    height: 100%;
     overflow:scroll;
 }
 .content
