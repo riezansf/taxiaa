@@ -11,7 +11,7 @@
     <script src="Leaflet.label/Marker.Label.js"></script>
     <script src="Leaflet.label/Map.Label.js"></script>
     <script src="Leaflet.label/Path.Label.js"></script>
-    <script type="text/javascript" src="jDBSCAN/jDBSCAN.js"></script>
+<!--    <script type="text/javascript" src="jDBSCAN/jDBSCAN.js"></script>-->
     <script src="util.js"></script> 
     <script src="randomColor.js"></script> 
     
@@ -34,7 +34,8 @@ var odLine = new L.FeatureGroup();
 var originClusterMarkers = new L.FeatureGroup(); 
 var destinationClusterMarkers = new L.FeatureGroup(); 
     
-var bandungCentroid=[-6.854744, 107.609810];
+var bandungCentroid=[-6.878744, 107.629810];
+//var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
 
@@ -389,7 +390,7 @@ $(document).ready(function() {
             }
         );  
     });
-    //$("#loadData").click();
+    $("#loadData").click();
     
     $("#clustering").click(function(){
         $("#clustering").attr("disabled","true");
@@ -484,14 +485,15 @@ $(document).ready(function() {
                 },
                 dataType: "json",
                 success: function(data){
+                    location.reload();
                     
-                    $("#addArea").attr("disabled",false); //enable add area
-                    editButton.attr("value","Edit");
-                    var color=randomColor();
-                    setStyleSelectedArea(editButton,getStyleGrid(color));
-                    
-                    //set <tr gird="">
-                    editButton.parent().parent().attr("grid",oldGrid.concat(selectedGrid));
+//                    $("#addArea").attr("disabled",false); //enable add area
+//                    editButton.attr("value","Edit");
+//                    var color=randomColor();
+//                    setStyleSelectedArea(editButton,getStyleGrid(color));
+//                    
+//                    //set <tr gird="">
+//                    editButton.parent().parent().attr("grid",oldGrid.concat(selectedGrid));
                 },
                 failure: function(errMsg) { alert (errMsg);}
             });
