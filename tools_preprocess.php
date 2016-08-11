@@ -58,9 +58,7 @@ var pointMappedToGridD=0;
 
 var styleGrid={weight:0.5, color:'grey',fillColor:'grey',fillOpacity:0.01};
 var styleSelectedGrid={weight:0.5, color:'red', fillColor:'red', fillOpacity:0.8};
-function getStyleGrid(color){
-    return { weight:0.5, color:color, fillColor:color, fillOpacity:0.6};
-}
+function getStyleGrid(color){ return { weight:0.5, color:color, fillColor:color, fillOpacity:0.6};}
     
 function buildMap(bandungCentroid){
     var start = new Date();
@@ -84,7 +82,7 @@ function drawBound(bound,color,weight,fillOpacity){
 var selectedGrid=[];
 function selectRectangle(e){ //set style of grid(rectangle) when clicked
     var layer=e.target;    
-    var gridNo=layer.label._container.innerHTML.split(" ")[0];
+    var gridNo=layer.label._content.split(" ")[0];
     if(layer.options.fillColor==styleGrid.fillColor){
         layer.setStyle(styleSelectedGrid);
         selectedGrid.push(gridNo);
@@ -336,7 +334,7 @@ $(document).ready(function() {
             
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
-       
+          
     $.getJSON("tools_preprocess_data.php",{ req : "getArea"},
         function(data, status){
             $.each(data, function (index, value) { data[index]=value; });
@@ -347,14 +345,15 @@ $(document).ready(function() {
                 $("#tableArea tbody").append(
                     "<tr id='rowArea"+no+"' grid='"+data[i].id+"' color='"+color+"'>"+
                         "<td class='areaNum'>"+no+"</td>"+
-                        "<td><input type='text' name='area[]' class='area' size=\"10\" value='"+data[i].area_name+"'></td>"+
+                        "<td><input type='text' name='area[]' class='area' size=\"15\" value='"+data[i].area_name+"'></td>"+
                         "<td><input type='button' name='editArea[]' class='editArea' value='Edit'></td>"+
                         "<td><input type='button' name='deleteArea[]' class='deleteArea' value='X'></td>"+
                     "</tr>");
                 grid=data[i].id.split(",");
                 
-                for(var j=0;j<grid.length;j++){   
-                    gridId[grid[j]].rectangle.setStyle(getStyleGrid(color));
+                for(var j=0;j<grid.length;j++){          
+//                    console.log();
+                    gridId[grid[j]].rectangle.setStyle(getStyleGrid(color)).bindLabel(data[i].area_name+" "+gridId[grid[j]].rectangle.label._content);
                 }
             }
         }

@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -27,7 +27,8 @@
                 break;
                 
             case "getArea" :
-                $result=mysql_query(" 
+                mysql_query("SET SESSION group_concat_max_len = 1000000");
+                $result=mysql_query("
                 SELECT area_name, GROUP_CONCAT(id SEPARATOR ',') id 
                 FROM grid_area
                 WHERE area_name IS NOT NULL and area_name!=''
