@@ -34,7 +34,7 @@ var odLine = new L.FeatureGroup();
 var originClusterMarkers = new L.FeatureGroup(); 
 var destinationClusterMarkers = new L.FeatureGroup(); 
     
-var bandungCentroid=[-6.878744, 107.629810];
+var bandungCentroid=[-6.918744, 107.629810];
 //var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
@@ -42,7 +42,8 @@ var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBAN
 // Variable for map
 var gridSize=0.001; //aprox 109,5m
     
-var data=[];    
+var dataTrip=[];    
+var dataGridArea=[];    
         
 var originPoint=[];
 var destinationPoint=[];
@@ -62,7 +63,7 @@ function getStyleGrid(color){ return { weight:0.5, color:color, fillColor:color,
     
 function buildMap(bandungCentroid){
     var start = new Date();
-    map = L.map('map').setView(bandungCentroid, 14);
+    map = L.map('map').setView(bandungCentroid, 15);
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         maxZoom: 19,
@@ -159,37 +160,21 @@ function drawGridRectangle(bounds,gridSize){
     console.log("Time to draw grid rectangle = "+(new Date() - start)+"ms");
     console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
 }
-   
-function mapPointToGrid(lat,long,OD){
-    for(var j=0;j<grid.length;j++){
-        for(var k=0;k<grid[j].length;k++){
-            if( lat>grid[j][k].topLeft[0] && lat<grid[j][k].rightBottom[0] && long<grid[j][k].rightBottom[1]){
-                //.log(typeof(lat)+">"+typeof(grid[j][k].topLeft[0])); 
-                if(OD=="origin"){
-                    grid[j][k].origin.push({location: { accuracy: 1, latitude: (lat), longitude: (long) }});
-                    pointMappedToGridO++;
-                }else{
-                    grid[j][k].destination.push({location: { accuracy: 1, latitude: (lat), longitude: (long) }});
-                    pointMappedToGridD++;
-                }    
-                break;
-            }
-        }
-    }
-}
-    
+       
 function getGridId(lat,long){
-    // Get grid ID & lookup area name
-    // update table argo_gps_join :
-    // pickup_grid_id
-    // pickup_area_name
-    // dropoff_grid_id
-    // dropoff_area_name
-    for(var j=0;j<gridId.length;j++){
-        if(lat>gridId[j].topLeft[0] && lat<grid[j].rightBottom[0] && long<grid[j].rightBottom[1]){
+    for(var j=1;j<gridId.length;j++){
+        if(lat>gridId[j].topLeft[0] && lat<gridId[j].rightBottom[0] && long<gridId[j].rightBottom[1]){
             return j;       
         }
     }
+}    
+
+function getGridArea(GridId){
+  for(var j=0;j<dataGridArea.length;j++){
+    if(dataGridArea[j].id.includes(gridId)){
+        return dataGridArea[j].area_name;
+    }
+  }
 }    
     
 function calculateCentroidOrigin(drawCentroid){
@@ -244,17 +229,30 @@ function calculateCentroidOrigin(drawCentroid){
     
 function load_draw_data(data){
     var old_time = new Date();
+    var circle;
+    var pGrid; var dGrid;
     for (var i=0; i<data.length; i++) {
-        originPoint.push({location: { accuracy: 1, latitude: data[i].pickup_loc_2_lat, longitude: data[i].pickup_loc_2_long }});
-        destinationPoint.push({location: { accuracy: 1, latitude: data[i].dropoff_loc_2_lat, longitude: data[i].dropoff_loc_2_long }});
+        originPoint.push({location: { accuracy: 1, latitude: data[i].pickup2_lat, longitude: data[i].pickup2_long }});
+        destinationPoint.push({location: { accuracy: 1, latitude: data[i].dropoff2_lat, longitude: data[i].dropoff2_long }});
 
         //origin point color is blue
-        var circle = L.circle([data[i].pickup_loc_2_lat,data[i].pickup_loc_2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(originPoint.length+". "+data[i].pickup_loc_2_lat+","+data[i].pickup_loc_2_long);
+        circle = L.circle([data[i].pickup2_lat,data[i].pickup2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(data[i].trip_id+". "+data[i].pickup2_lat+","+data[i].pickup2_long);
         originMarkers.addLayer(circle);
         
         //destination point color is green
-        var circle = L.circle([data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(destinationPoint.length+". "+data[i].dropoff_loc_2_lat+","+data[i].dropoff_loc_2_long);
+        circle = L.circle([data[i].dropoff2_lat,data[i].dropoff2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(data[i].trip_id+". "+data[i].dropoff2_lat+","+data[i].dropoff2_long);
         destinationMarkers.addLayer(circle);
+        
+        pGrid=getGridId(data[i].pickup2_lat,data[i].pickup2_long);
+        dGrid=getGridId(data[i].dropoff2_lat,data[i].dropoff2_long);
+        
+        dataTrip[i]={ 
+            id :  data[i].trip_id,
+            pickup2_grid : pGrid,
+            dropoff2_grid : dGrid,
+            pickup2_area : getGridArea(pGrid),
+            dropoff2_area : getGridArea(dGrid)
+        };
         
 //        //Draw line origin point to destintion
 //        var polyline = L.polyline(
@@ -266,8 +264,6 @@ function load_draw_data(data){
 //        );
 //        odLine.addLayer(polyline);
         
-//        if(mapOrigin){ mapPointToGrid(data[8],data[9],"origin"); }
-//        if(mapDestination){ mapPointToGrid(data[14],data[15],"destination");
     }
     
     map.addLayer(originMarkers);
@@ -334,7 +330,8 @@ $(document).ready(function() {
             
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
-          
+    
+    //get areaname list
     $.getJSON("tools_preprocess_data.php",{ req : "getArea"},
         function(data, status){
             $.each(data, function (index, value) { data[index]=value; });
@@ -352,10 +349,14 @@ $(document).ready(function() {
                 grid=data[i].id.split(",");
                 
                 for(var j=0;j<grid.length;j++){          
-//                    console.log();
                     gridId[grid[j]].rectangle.setStyle(getStyleGrid(color)).bindLabel(data[i].area_name+" "+gridId[grid[j]].rectangle.label._content);
                 }
+                
+                dataGridArea[i]=data;
             }
+            
+            //load data after getArea finish!
+            $("#loadData").click();
         }
     );
     
@@ -374,8 +375,10 @@ $(document).ready(function() {
 
                 $.each(data, function (index, value) { data[index]=value; });
 
-                load_draw_data(data); 
-
+                load_draw_data(data);
+                //console.log(dataGridArea[1]);
+                //console.log(dataTrip[100]);
+            
                 //Filter
                 $("#fOriginMarkers").change(function(){
                     if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
@@ -389,7 +392,7 @@ $(document).ready(function() {
             }
         );  
     });
-    $("#loadData").click();
+   
     
     $("#clustering").click(function(){
         $("#clustering").attr("disabled","true");

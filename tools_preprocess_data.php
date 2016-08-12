@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -11,12 +11,12 @@
                 $result=mysql_query("
                     SELECT * FROM argo_gps_join_12 
                     WHERE 
-                        pickup_loc_2_lat is not null and pickup_loc_2_lat!='' and
-                        pickup_loc_2_long is not null and pickup_loc_2_long!='' and
-                        dropoff_loc_2_lat is not null and dropoff_loc_2_lat!='' and
-                        dropoff_loc_2_long is not null and dropoff_loc_2_long!=''
+                        pickup2_lat is not null and pickup2_lat!='' and
+                        pickup2_long is not null and pickup2_long!='' and
+                        dropoff2_lat is not null and dropoff2_lat!='' and
+                        dropoff2_long is not null and dropoff2_long!=''
                     ".$wherePeriod."
-                    ORDER BY trip_date,pickup
+                    ORDER BY trip_id
                 ");
                 $i=0;
                 while ($data=mysql_fetch_array($result)){
