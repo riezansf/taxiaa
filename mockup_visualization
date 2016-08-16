@@ -1,63 +1,41 @@
-== Mockup Visualization Tools ==
 
-Init :
-- Show bandung map with border
+Statistic Data
+Dec 10256 Trip, 322 loaction null/empty
+Nov 6081 Trip, XXX location null
+	
+== Mockup Visualization Tools ==
 
 # CHOOSE DATA
     Period : StartDate - End Date
-        Week : Weekdays &|| Weekend
-        Days : Pagi / Siang / Sore / Malam / Dini Hari
-    * all data (argo_gps_join_XX.csv) stored in mysql, don't forget to recheck     
+        Days : Mon - Sun
+        Time : Pagi / Siang / Sore / Malam / Dini Hari or PERIOD
     * Load data button
-        * Show All Origin Ponint
-        * Show All Destination Ponint
+        * Show/Hide All Origin Ponint
+        * Show/Hide All Destination Ponint
+        * Show/Hide line
 
-# Clustering O-D Pair
-    Eps : ? 
-    MinPts : ?
-    Grid Size : Don't Use / 50m / 100m / 200m / 500m
-    * process :
-        - query from mysql where choosen period usinng AJAX
-        - if use grid {
-            mapPointToGrid();
-            calculateGridCentroid();
-            dbscan(eps,minPts);
-            countTripBetweenODPair();
-            showResult();
-          }else{
-            dbscan(eps,minPts);
-            showResult();
-            *OD Pair Not Available
-          }
-          
-    * Filter Result
-        * Show/Hide Table Count Rank
-        * Show/Hide Clustered Origin Point
-        * Show/Hide Clustered Destination Point
-        * Show/Hide Clustered Grid Origin w/ centroid
-        * Show/Hide Clustered Grid Destination w/ centroid
-        * Show/Hide Arrow-line between grid
+# Area Labeling
 
-# O-D Sequential Pattern Mining
-    Grid
-        Size : 50m / 100m / 200m / 500m 
-        * Process
-            - query from mysql where choosen period usinng AJAX
-            - mapPointToGrid(); assign grid number to every points 
-            - generate grid OD pair (ITEM SET) 
-            - Run PrefixSpan
-            - Visualize Result
-            - Cluster Result??
-
-        * Filter Result
-            * Show/Hide Table Result Rank, Support & Confidence
-            * Show/Hide Origin Point
-            * Show/Hide Destination Point
-            * Show/Hide Arrow-line between grid centroid (average point lat-long)
+# Statistic After Area Labeling
+    - % akupansi sesuai periode waktu filter,
+    - statistik o-d dimasing2 area, order by O+D
+        _______________
+	   | Area | O | D  |
+       | BIP  | 40| 10 |
+        ---------------
+       Click action :
+       BIP : show all OD point in grid
+       40 : show origin only with line arrow leaving BIP | List urutan area tujuan berdasarkan jumlah
+       10 : show destination only with line arrow coming to BIP | List urutan area asal berdasarkan jumlah
+       
+    - Ranking pasangan O-D
+        BIP - CIHAMPELAS 10
+        PVJ - ITB        5
+        ...
         
-    Use Previous Cluster Result
-        Enable when clustering OD process done
-        * Process
+# After Graph clustering
+    
+
     
     
     
