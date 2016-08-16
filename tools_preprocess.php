@@ -167,13 +167,19 @@ function getGridId(lat,long){
             return j;       
         }
     }
+    return "Luar Bdg"
 }    
 
-function getGridArea(GridId){
-  for(var j=0;j<dataGridArea.length;j++){
-    if(dataGridArea[j].id.includes(gridId)){
-        return dataGridArea[j].area_name;
+function getGridArea(gridId){
+  if(typeof gridId=="undefined"){
+    return "Luar Bdg";
+  }else{
+    for(var j=0;j<dataGridArea.length;j++){
+        if(dataGridArea[j].id.includes(gridId)){
+            return dataGridArea[j].area_name;
+        }
     }
+    return "Luar Bdg";
   }
 }    
     
@@ -231,6 +237,7 @@ function load_draw_data(data){
     var old_time = new Date();
     var circle;
     var pGrid; var dGrid;
+    var pArea; var dArea;
     for (var i=0; i<data.length; i++) {
         originPoint.push({location: { accuracy: 1, latitude: data[i].pickup2_lat, longitude: data[i].pickup2_long }});
         destinationPoint.push({location: { accuracy: 1, latitude: data[i].dropoff2_lat, longitude: data[i].dropoff2_long }});
@@ -245,15 +252,19 @@ function load_draw_data(data){
         
         pGrid=getGridId(data[i].pickup2_lat,data[i].pickup2_long);
         dGrid=getGridId(data[i].dropoff2_lat,data[i].dropoff2_long);
+        pArea=getGridArea(pGrid);
+        dArea=getGridArea(dGrid);
         
         dataTrip[i]={ 
             id :  data[i].trip_id,
-            pickup2_grid : pGrid,
-            dropoff2_grid : dGrid,
-            pickup2_area : getGridArea(pGrid),
-            dropoff2_area : getGridArea(dGrid)
+            pickup2_grid100 : pGrid,
+            dropoff2_grid100 : pGrid,
+            pickup2_area : pArea,
+            dropoff2_area : dArea
         };
         
+        //console.log(pGrid+"/"+pArea+" to "+dGrid+"/"+dArea);
+         
 //        //Draw line origin point to destintion
 //        var polyline = L.polyline(
 //            [new L.LatLng(data[i].pickup_loc_2_lat,data[i].pickup_loc_2_long),new L.LatLng(data[i].dropoff_loc_2_lat,data[i].dropoff_loc_2_long)], 
@@ -271,7 +282,7 @@ function load_draw_data(data){
     map.addLayer(odLine);
     
     var new_time = new Date();
-    console.log("\nTime to read data, draw point, & map to grid = "+(new_time - old_time)+" ms");
+    console.log("\nTime to read data, draw point, lookup grid & area name = "+(new_time - old_time)+" ms");
     console.log("Origin point "+originPoint.length+" , Destination point : "+destinationPoint.length);
     //console.log("Origin point mapped to grid : "+pointMappedToGridO+" , Destination point mapped to grid : "+pointMappedToGridD);
 }       
@@ -332,8 +343,9 @@ $(document).ready(function() {
     drawGridRectangle(bandungBounds,gridSize);
     
     //get areaname list
-    $.getJSON("tools_preprocess_data.php",{ req : "getArea"},
+    $.getJSON("tools_preprocess_get.php",{ req : "getGridArea"},
         function(data, status){
+            var old_time = new Date();
             $.each(data, function (index, value) { data[index]=value; });
             var no; var grid; var color;
             for (var i=0; i<data.length; i++){
@@ -351,10 +363,11 @@ $(document).ready(function() {
                 for(var j=0;j<grid.length;j++){          
                     gridId[grid[j]].rectangle.setStyle(getStyleGrid(color)).bindLabel(data[i].area_name+" "+gridId[grid[j]].rectangle.label._content);
                 }
-                
-                dataGridArea[i]=data;
             }
-            
+            dataGridArea=data;
+            var new_time = new Date();
+            console.log("\nTime to load grid area = "+(new_time - old_time)+" ms");
+        
             //load data after getArea finish!
             $("#loadData").click();
         }
@@ -363,21 +376,20 @@ $(document).ready(function() {
     $("#loadData").click(function(){
         $("#loadData").attr("disabled","true");
 
-        $.getJSON("tools_preprocess_data.php",{
-                req : "getData",
+        $.getJSON("tools_preprocess_get.php",{
+                req : "getTrip",
                 startPeriod : $("#startPeriod").val(),
                 endPeriod : $("#endPeriod").val()
             },
             function(data, status){
                 $("#loadData").attr("value","Data loaded!");
                 $("#footer").show();
-                $("#clustering").attr("disabled",false);
+                $("#clustering").attr("disabled",true);
 
                 $.each(data, function (index, value) { data[index]=value; });
 
                 load_draw_data(data);
-                //console.log(dataGridArea[1]);
-                //console.log(dataTrip[100]);
+                //console.log(dataGridArea);
             
                 //Filter
                 $("#fOriginMarkers").change(function(){
@@ -386,13 +398,43 @@ $(document).ready(function() {
                 $("#fDestinationMarkers").change(function(){
                     if(this.checked) { map.addLayer(destinationMarkers); }else{ map.removeLayer(destinationMarkers); }
                 });
-                 $("#fOdLine").change(function(){
+                $("#fOdLine").change(function(){
                     if(this.checked) { map.addLayer(odLine); }else{ map.removeLayer(odLine); }
                 });
+                
+                $("#updateData").attr("disabled",false);
             }
         );  
     });
    
+     $("#updateData").click(function(){
+       var old_time = new Date();
+         $.ajax({
+            type: "POST",
+            url: "tools_preprocess_post.php",
+            data: {
+                req : "updateTrip",
+                data : dataTrip
+            },
+            dataType: "json",
+            success: function(data){
+                console.log("Time to update gridId & area name to trip data "+(new Date() - old_time)+"ms");
+                //$("#exportData").attr("disabled",false);
+            },
+            failure: function(errMsg) { alert (errMsg);}
+        });
+     });
+    
+    $("#exportData").click(function(){
+        $.getJSON("tools_preprocess_get.php",{
+                req : "exportData"
+            },
+            function(data, status){
+                
+            }
+        );  
+    });
+    
     
     $("#clustering").click(function(){
         $("#clustering").attr("disabled","true");
@@ -444,9 +486,7 @@ $(document).ready(function() {
         $("#tableArea tbody").append(newAreaDom);
     });
     
-    $(document).on("click", ".deleteArea", function(){
-        console.log($(this));
-    });
+    $(document).on("click", ".deleteArea", function(){   });
     
     $(document).on("focus", ".area", function(){ //highlight grid
         setStyleSelectedArea($(this),styleSelectedGrid);
@@ -472,15 +512,14 @@ $(document).ready(function() {
             enableSelectGrid(true); //enable to select grid
         }
         else if(editButton.attr("value")=="Done"){    
-            //reset colored grid
     
             enableSelectGrid(false); //disable selcect grid
                     
             $.ajax({
-                type: "GET",
-                url: "tools_preprocess_data.php",
+                type: "POST",
+                url: "tools_preprocess_post.php",
                 data: {
-                    req : "update",
+                    req : "updateGridArea",
                     areaName : $(this).parent().prev().children().val(),
                     grid : selectedGrid.toString(),
                     oldGrid : oldGrid.toString() 
@@ -488,14 +527,6 @@ $(document).ready(function() {
                 dataType: "json",
                 success: function(data){
                     location.reload();
-                    
-//                    $("#addArea").attr("disabled",false); //enable add area
-//                    editButton.attr("value","Edit");
-//                    var color=randomColor();
-//                    setStyleSelectedArea(editButton,getStyleGrid(color));
-//                    
-//                    //set <tr gird="">
-//                    editButton.parent().parent().attr("grid",oldGrid.concat(selectedGrid));
                 },
                 failure: function(errMsg) { alert (errMsg);}
             });
@@ -517,7 +548,11 @@ $(document).ready(function() {
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="2"><input type="button" id="loadData" value="Load Data"></td>
+                        <td colspan="2">
+                            <input type="button" id="loadData" value="Load Data">
+                            <input type="button" id="updateData" value="Update Data" disabled>
+                            <input type="button" id="exportData" value="Expost CSV area pair">
+                        </td>
                     </tr>
                 </table>
             </div>
