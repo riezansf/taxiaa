@@ -34,7 +34,10 @@ Nov 6081 Trip, XXX location null
         ...
         
 # After Graph clustering
-    
+    - visualisasi murni graph
+    - plot di peta dengan node masing2 area, centroi ke centroid, weight berdasarkan jumlah trip
+    - filter edge
+    - Show computational time cost
 
     
     
