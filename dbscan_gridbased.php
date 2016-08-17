@@ -261,17 +261,16 @@ function dbscan(data,eps,minPts,color,drawPointRadius){
             }).bindLabel("Cluster number : "+dbscanResult[i]+"\nRecord no : "+i).addTo(map); 
                 
              originClusterMarkers.addLayer(circle);
-            
-            
-//             for(var j=0;j<grid.length;j++){
-//                for(var k=0;k<grid[j].length;k++){                                       
-//                    if(data[i].location.latitude>grid[j][k].topLeft[0] && data[i].location.latitude<grid[j][k].rightBottom[0] && data[i].location.longitude<grid[j][k].rightBottom[1]){
-//                        //console.log(typeof(data[i].location.latitude)+">"+typeof(grid[j][k].topLeft[0]));  
-//                        grid[j][k].rectangle.setStyle({fillColor:drawColor,fillOpacity:0.5});
-//                        break;
-//                    }
-//                }
-//            }         
+                    
+             for(var j=0;j<grid.length;j++){
+                for(var k=0;k<grid[j].length;k++){                                       
+                    if(data[i].location.latitude>grid[j][k].topLeft[0] && data[i].location.latitude<grid[j][k].rightBottom[0] && data[i].location.longitude<grid[j][k].rightBottom[1]){
+                        //console.log(typeof(data[i].location.latitude)+">"+typeof(grid[j][k].topLeft[0]));  
+                        grid[j][k].rectangle.setStyle({fillColor:drawColor,fillOpacity:0.5});
+                        break;
+                    }
+                }
+            }         
         }else{
             unclustered++;
         }       
@@ -302,8 +301,8 @@ $(document).ready(function() {
     
     $.getJSON("tools_preprocess_get.php",{
                 req : "getTrip",
-                startPeriod : "2015-12-20",
-                endPeriod : "2015-12-26"
+                startPeriod : "2015-12-8",
+                endPeriod : "2015-12-9"
             },
             function(data, status){
                 $.each(data, function (index, value) { data[index]=value; });
@@ -312,7 +311,8 @@ $(document).ready(function() {
         
                 calculateCentroidOrigin(false); //plot centroid, red color 
         
-                dbscan(originPoint,0.1,2,"random",10);
+                //dbscan(originPoint,0.1,2,"random",10);
+                dbscan(centroidOrigin,0.1,2,"random",10);
             }
         );      
 });

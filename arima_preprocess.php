@@ -345,8 +345,8 @@ $(document).ready(function() {
                 },
                 function(data, status){
                     $.each(data, function (index, value) { data[index]=value; });
-                    
-                    console.log(data);
+                    //map.removeLayer(originMarkers);
+                    //console.log(data);
                     var max=-1;
                      for (var i=0; i<data.length; i++) {
                         if(parseInt(data[i].count)>max){
@@ -362,7 +362,7 @@ $(document).ready(function() {
                         //console.log(color);
                         
                         if(data[i].count!=0){
-                            gridId[data[i].grid].rectangle.setStyle({fillColor:color,fillOpacity:1}).bindLabel(data[i].count);    
+                            //gridId[data[i].grid].rectangle.setStyle({fillColor:color,fillOpacity:0.5}).bindLabel(data[i].count);    
                         }
                         
                          console.log(data[i].count);
@@ -399,7 +399,7 @@ $(document).ready(function() {
                         <td>Period</td>
                         <td>:</td>
                         <td>
-                            <input type="text" id="datePeriod" class="date" value="2015-12-09" size=12 readonly> 
+                            <input type="text" id="datePeriod" class="date" value="2015-12-08" size=12 readonly> 
                             <br>
                             <select id="timePeriod">
                                 <option value="00:00-03:00" selected>00:00 - 03:00</option>
