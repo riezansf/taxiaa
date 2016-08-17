@@ -1,4 +1,13 @@
+
+
 //===== generate random color
+Number.prototype.padZero= function(len){
+ var s= String(this), c= '0';
+ len= len || 2;
+ while(s.length < len) s= c + s;
+ return s;
+}
+
 Array.prototype.getRandom= function(cut){
     var i= Math.floor(Math.random()*this.length);
     if(cut && i in this){

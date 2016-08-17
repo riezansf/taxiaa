@@ -15,6 +15,7 @@
     <script src="util.js"></script> 
     <script src="randomColor.js"></script> 
     
+    <link rel="stylesheet" href="jquery/jquery-ui.css" />
     <link rel="stylesheet" href="leaflet/leaflet.css" />
     <link rel="stylesheet" href="tools_style.css" /> 
 <script>
@@ -28,15 +29,19 @@ var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
       
+ 
+var gridSize=0.005;
+var styleGrid={weight:0.5, color:'grey',fillColor:'grey',fillOpacity:0.01};
+    
 var originPoint=[]; 
 var originMarkers = new L.FeatureGroup(); 
 var originClusterMarkers = new L.FeatureGroup(); 
-var destinationPoint=[];
    
 var centroidOrigin=[];
-var centroidDestination=[];
+//var centroidDestination=[];
     
 var grid=[];
+var gridId=[];
     
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
@@ -61,23 +66,25 @@ function drawBound(bound,color,weight,fillOpacity){
 }
     
 //=== GRID WITH RECTANGLE    
-function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
+function drawGridRectangle(bounds,gridSize){
     var start = new Date();
-    var gridCount=0;
-    var row=0; var col=0;
+    var gridCount=1;
+    var row=1; var col=1;
+    var rectangle;
+    var k; var bound;
     
     for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
         if(grid[row]==null){grid[row]=[]}
         
-        var k=bounds[0][1]; 
-        col=0;
+        k=bounds[0][1]; 
+        col=1;
         while(k<bounds[1][1]){
-            var b=[[j, k] , [(j-gridSize).toFixed(12),(k+gridSize).toFixed(12)]];
-            var rectangle = L.rectangle(b, {color: color, weight: weight, fillOpacity:fillOpacity}).bindLabel(row+","+col).addTo(map);
-            
-            if(grid[row][col]==null){grid[row][col]=[];}
-            
-            grid[row][col]={
+            bound=[[j, k] , [(j-gridSize).toFixed(12),(k+gridSize).toFixed(12)]];
+            rectangle = L.rectangle(bound, styleGrid).bindLabel(gridCount+" "+row+","+col).addTo(map);
+         
+            gridId[gridCount]={
+                row: row,
+                col: col,
                 rectangle : rectangle,
                 topLeft : [j,k],
                 rightBottom : [(j-gridSize).toFixed(12), (k+gridSize).toFixed(12)],
@@ -86,7 +93,7 @@ function drawGridRectangle(bounds,gridSize,weight,color,fillOpacity){
                 centroidOrigin : [],
                 centroidDestination : []
             };
-            
+                        
             k=(k+gridSize);
             gridCount++;
             col++;
@@ -101,7 +108,6 @@ function mapPointToGrid(lat,long){
     for(var j=0;j<grid.length;j++){
         for(var k=0;k<grid[j].length;k++){
             if( lat>grid[j][k].topLeft[0] && lat<grid[j][k].rightBottom[0] && long<grid[j][k].rightBottom[1]){
-                //.log(typeof(lat)+">"+typeof(grid[j][k].topLeft[0])); 
                
                 grid[j][k].origin.push({location: { accuracy: 1, latitude: (lat), longitude: (long) }});
                 pointMappedToGridO++;
@@ -111,6 +117,15 @@ function mapPointToGrid(lat,long){
         }
     }
 }
+    
+function getGridId(lat,long){
+    for(var j=1;j<gridId.length;j++){
+        if(lat>gridId[j].topLeft[0] && lat<gridId[j].rightBottom[0] && long<gridId[j].rightBottom[1]){
+            return j;       
+        }
+    }
+    return "Luar Bdg";
+} 
     
 function calculateCentroidOrigin(drawCentroid){
     var singleCentroid=0;
@@ -161,76 +176,35 @@ function calculateCentroidOrigin(drawCentroid){
     console.log("Active grid (centroid) Origin : "+centroidOrigin.length);
     console.log("1 point in 1 grid Origin : "+singleCentroid);
 } 
-    
-function calculateCentroidDestination(drawCentroid){
-    var old_time = new Date();;
-    for(var i=0;i<grid.length;i++){
-        for(var j=0;j<grid[i].length;j++){     
-                    
-            //console.log(grid[i][j].destination);
-            if(grid[i][j].destination.length>1){
-                var latXTotal = 0;
-                var latYTotal = 0;
-                var lonDegreesTotal = 0;
-                for(var k=0;k<grid[i][j].destination.length;k++){
-                    var latDegrees = parseFloat(grid[i][j].destination[k].location.latitude);
-                    var lonDegrees = parseFloat(grid[i][j].destination[k].location.longitude);
-                    
-                    var latRadians = Math.PI * latDegrees / 180;
-                    latXTotal += Math.cos(latRadians);
-                    latYTotal += Math.sin(latRadians);
-
-                    lonDegreesTotal = lonDegreesTotal+lonDegrees;
-                }
-                var finalLatRadians = Math.atan2(latYTotal, latXTotal);
-                var finalLatDegrees = finalLatRadians * 180 / Math.PI;
-                var finalLonDegrees = lonDegreesTotal / grid[i][j].destination.length;
-            
-                grid[i][j].centroidDestination.push({location: { accuracy: 1, latitude: finalLatDegrees.toString(), longitude: finalLonDegrees.toString() }});
-                centroidDestination.push({location: { accuracy: 1, latitude: finalLatDegrees.toString(), longitude: finalLonDegrees.toString() }});
-                
-                //Centroid is solid RED
-                if(drawCentroid){
-                    var circle = L.circle([finalLatDegrees, finalLonDegrees], 5, { color: "green", fillColor: "green", fillOpacity: 1}).addTo(map);
-                }
-            }
-            else if(grid[i][j].destination.length==1){
-                grid[i][j].centroidDestination.push({ location: { accuracy: 1, latitude: grid[i][j].destination[0].location.latitude, longitude: grid[i][j].destination[0].location.longitude }});
-                centroidDestination.push({location: { accuracy: 1, latitude: grid[i][j].destination[0].location.latitude, longitude: grid[i][j].destination[0].location.longitude }}); 
-                if(drawCentroid){
-                    var circle = L.circle([grid[i][j].destination[0].location.latitude, grid[i][j].destination[0].location.longitude ], 5, { color: "blue", fillColor: "blue", fillOpacity: 0.5}).addTo(map);
-                } 
-            }
-        }
-    }
-    var new_time = new Date();
-    console.log("Calculate centroid destination time = "+(new_time - old_time)+" ms");
-    console.log("Total trip : "+destinationPoint.length+" , Active grid Destination:"+centroidDestination.length);
-          
-}    
-    
+     
 function read_draw_count_data(data){
-
     var old_time = new Date();
     var circle;
-
+    var gridNo;
+    
+    map.removeLayer(originMarkers);
+    originMarkers=new L.FeatureGroup(); 
     for (var i=0; i<data.length; i++) {
         originPoint.push({location: { accuracy: 1, latitude: data[i].pickup2_lat, longitude: data[i].pickup2_long }});
 
         //origin point color is blue
         circle = L.circle([data[i].pickup2_lat,data[i].pickup2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(data[i].trip_id+". "+data[i].pickup2_lat+","+data[i].pickup2_long);
-        //map.addLayer(circle)
+        originMarkers.addLayer(circle);
         
-        //originMarkers.addLayer(circle);
+        gridNo=getGridId(data[i].pickup2_lat,data[i].pickup2_long);
+        if(gridNo!="Luar Bdg"){
+            gridId[gridNo].origin.push(data[i].trip_date+" "+data[i].pickup);
+        }
         
-        mapPointToGrid(data[i].pickup2_lat,data[i].pickup2_long);           
+        //console.log(getGridId(data[i].pickup2_lat,data[i].pickup2_long));
+        //mapPointToGrid(data[i].pickup2_lat,data[i].pickup2_long);           
     }
-    //map.addLayer(originMarkers);
+    map.addLayer(originMarkers);
 
     var new_time = new Date();
     console.log("\nTime to read data, draw point, & map to grid = "+(new_time - old_time)+" ms");
     console.log("Origin point "+originPoint.length);
-    console.log("Origin point mapped to grid : "+pointMappedToGridO);
+    //console.log("Origin point mapped to grid : "+pointMappedToGridO);
 }   
        
 function dbscan(data,eps,minPts,color,drawPointRadius){
@@ -289,55 +263,198 @@ function dbscan(data,eps,minPts,color,drawPointRadius){
     console.log("Clustering time = "+(new_time - old_time)+" ms");
 }    
     
-$(document).ready(function() {    
-    var gridSize=0.001;
-    var gridWeight=0.5; //Stroke width in pixels.
-    var gridColor="grey"; //Stroke color.
-    var gridFillColor="grey";
-    var gridFillOpacity=0.01;
-    var gridClassName="";
-    
+$(document).ready(function() { 
+    $(".date").datepicker({ dateFormat: 'yy-mm-dd', minDate : '2015-12-23', maxDate : '2015-12-31'});
+ 
     buildMap(bandungCentroid);
-    drawGridRectangle(bandungBounds,gridSize,gridWeight,gridColor,gridFillOpacity);
+    drawGridRectangle(bandungBounds,gridSize);
     
-    $.getJSON("tools_preprocess_get.php",{
-                req : "getTrip",
-                startPeriod : "2015-12-20",
-                endPeriod : "2015-12-26"
+    $("#generate").click(function(){
+        //map.removeLayer(originMarkers);
+        
+        $.getJSON("tools_preprocess_get.php",{
+                req : "getTripForArimaData",
+                datePeriod : $("#datePeriod").val(),
+                timePeriod : $("#timePeriod").val()
             },
             function(data, status){
                 $.each(data, function (index, value) { data[index]=value; });
  
                 read_draw_count_data(data); // read data, assign to grid
+            
+                var dataArima=[];
+                var start; var startWIB;
+                var end = new Date($("#datePeriod").val()); end.setTime( end.getTime() + end.getTimezoneOffset()*60*1000);
+                var startPlus3;
+                var countTripIn3Period;
+            
+                for (var i=1; i<gridId.length; i++) { //looping grid, 1 grid 1 file csv
+                    if(gridId[i].origin.length!=0){
+                        //convert to GMT 0
+                        startWIB=new Date("2015-12-07");
+                        start=new Date(startWIB.valueOf() + startWIB.getTimezoneOffset() * 60000);
+                        
+                        while(start < end){ //looping baris di csv
+                           //date +3H from start    
+                           startPlus3= new Date(start); startPlus3.setHours(start.getHours() + 3);
+                            
+                           countTripIn3Period=0;
+                           for(var j=0; j<gridId[i].origin.length; j++){ //looping untuk count trip di tiap periode
+                               var tripDateTimeWIB=new Date(gridId[i].origin[j]);
+                               var tripDateTime=new Date(tripDateTimeWIB.valueOf() + tripDateTimeWIB.getTimezoneOffset() * 60000);
+                               
+                               //console.log("tripDateTime "+tripDateTime);
+                               if(tripDateTime>start && tripDateTime<startPlus3){
+                                   countTripIn3Period=countTripIn3Period+1;
+                               }
+                           }
+                            
+                            var a=start.getFullYear()+"-"+(start.getMonth()+1).padZero()+"-"+start.getDate().padZero()+" "+start.getHours().padZero()+":"+start.getMinutes().padZero();
+                            var b=startPlus3.getFullYear()+"-"+(startPlus3.getMonth()+1).padZero()+"-"+startPlus3.getDate().padZero()+" "+startPlus3.getHours().padZero()+":"+startPlus3.getMinutes().padZero();
+                            
+                            //console.log(i+","+a+"-"+b+","+countTripIn3Period);
+                            dataArima.push(i+","+a+"-"+b+","+countTripIn3Period);
+                            
+                           //shift 3hours 
+                           var newDate = start.setHours(start.getHours() + 3);
+                           start = new Date(newDate);
+                        }
+                    }                
+                }
+    
+                //update dataset for arima in db
+                $.ajax({
+                    type: "POST",
+                    url: "tools_preprocess_post.php",
+                    data: {
+                        req : "saveArimaData",
+                        arimaData : dataArima
+                    },
+                    dataType: "json",
+                    success: function(data){
+                        //console.log("success");
+                        //location.reload();
+                    },
+                    failure: function(errMsg) { alert (errMsg);}
+                });
+            
+                $.getJSON("tools_preprocess_get.php",{
+                    req : "getArimaData",
+                    datePeriod : $("#datePeriod").val(),
+                    timePeriod : $("#timePeriod").val()
+                },
+                function(data, status){
+                    $.each(data, function (index, value) { data[index]=value; });
+                    
+                    console.log(data);
+                    var max=-1;
+                     for (var i=0; i<data.length; i++) {
+                        if(parseInt(data[i].count)>max){
+                            max=data[i].count;
+                        }
+                     }
+                    
+                    for (var i=0; i<data.length; i++) {
+                        var R = Math.ceil((255 * data[i].count) / max);
+                        var G = Math.ceil((255 * (max - data[i].count)) / max); 
+                        var B = 0;
+                        var color= "rgb("+R+" ,"+G+","+ B+")";
+                        //console.log(color);
+                        
+                        if(data[i].count!=0){
+                            gridId[data[i].grid].rectangle.setStyle({fillColor:color,fillOpacity:1}).bindLabel(data[i].count);    
+                        }
+                        
+                         console.log(data[i].count);
+                        if(parseInt(data[i].count)>max){
+                            max=data[i].count;
+                        }
+                    }
+                    console.log(max);
+                });
+ 
+                
+                //calculateCentroidOrigin(false); //plot centroid, red color 
         
-                calculateCentroidOrigin(false); //plot centroid, red color 
-        
-                dbscan(originPoint,0.1,2,"random",10);
+                //dbscan(originPoint,0.1,2,"random",10);
             }
-        );      
+        );  
+        
+    });
+    
+        
 });
     
-//=================== FOR ANIMATION
-//        var i = 0;                     //  set your counter to 1
-//        function myLoop () {           //  create a loop function
-//           setTimeout(function () {    //  call a 3s setTimeout when the loop is called
-//                  //map.removeLayer(marker); 
-//                marker = new L.Marker(new L.LatLng(lines[i][5], lines[i][4]), {
-//                    icon:	new L.NumberedDivIcon({number: i})
-//                });
-//                marker.addTo(map);
-//                i++;                     //  increment the counter
-//                if (i < lines.length) {            //  if the counter < 10, call the loop function
-//                 myLoop();             //  ..  again which will trigger another 
-//                }                        //  ..  setTimeout()
-//           }, 100)
-//        }
-//        myLoop();                      //  start the loop     
     
 </script> 
 </head>
 
 <body>
-    <div id='map'></div>  
+    <div class="container">    
+        <div class="sideBar">
+            <div id="chooseData">
+                <b>Choose Data</b><br>
+                <table>
+                    <tr>
+                        <td>Period</td>
+                        <td>:</td>
+                        <td>
+                            <input type="text" id="datePeriod" class="date" value="2015-12-09" size=12 readonly> 
+                            <br>
+                            <select id="timePeriod">
+                                <option value="00:00-03:00" selected>00:00 - 03:00</option>
+                                <option value="03:00-06:00">03:00 - 06:00</option>
+                                <option value="06:00-09:00">06:00 - 09:00</option>
+                                <option value="09:00-12:00">09:00 - 12:00</option>
+                                <option value="12:00-15:00">12:00 - 15:00</option>
+                                <option value="15:00-18:00">15:00 - 18:00</option>
+                                <option value="18:00-21:00">18:00 - 21:00</option>
+                                <option value="21:00-24:00">21:00 - 24:00</option>
+                            </select>
+<!--                            <input type="text" id="endPeriod" class="date" value="2015-12-31" size=12>-->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="button" id="generate" value="Generate">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+ <!--           <hr>
+
+            <div id="dbscan">
+                <b>Find Cluster (DBSCAN)</b><br>
+                 <table>
+                    <tr>
+                        <td>
+                            Eps : <input type="text" id="eps" class="" value="0.2" size=5>&nbsp;
+                            Min Pts : <input type="text" id="minpts" class="" value="3" size=5>
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><input type="button" id="clustering" value="Process" disabled></td>
+                    </tr>
+                </table>
+            </div>
+
+            <hr>
+            <div id="sp">
+                <b>Location Area</b><br>
+                <table id="tableArea">
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <input type="button" id="addArea" value="Add">
+        -->
+        </div>
+        <div class="content">
+            <div id="map"> </div>
+            
+            <div id="footer" hidden> </div>
+        </div>  
+    </div>
 </body>
 </html>

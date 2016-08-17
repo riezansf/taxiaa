@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -59,7 +59,57 @@
                 }
                 echo fclose($myfile);
                 break;
-                        
+                   
+            //=============== JAMIL
+            case "getTripForArimaData" : 
+                $timePeriod=explode("-",$_GET['timePeriod']);
+                $wherePeriod=(isset($_GET['datePeriod']) && isset($_GET['timePeriod']))? 
+                    " AND trip_date <= STR_TO_DATE('".$_GET['datePeriod']." ".$timePeriod[0]."', '%Y-%m-%d %H:%i') AND trip_date >= STR_TO_DATE('2015-12-07 00:00', '%Y-%m-%d %H:%i')" : "" ;
+                $result=mysql_query("
+                    SELECT * FROM trip_12 
+                    WHERE 
+                        pickup2_grid100!='' AND pickup2_grid100 IS NOT NULL
+                    ".$wherePeriod."
+                    ORDER BY trip_date,pickup ASC
+                ");
+                $i=0;
+//                echo "
+//                    SELECT * FROM trip_12 
+//                    WHERE 
+//                        pickup2_grid100!='' AND pickup2_grid100 IS NOT NULL
+//                    ".$wherePeriod."
+//                    ORDER BY trip_date,pickup ASC
+//                ";
+                while ($data=mysql_fetch_array($result)){
+                    $trip[$i]=$data;
+                    $i++;
+                }
+                echo @json_encode($trip);
+                break;   
+                
+            case "getArimaData" :
+                $timePeriod=explode("-",$_GET['timePeriod']);
+                
+                $result=mysql_query("
+                    SELECT grid,count 
+                    FROM arimaData 
+                    where period='2015-12-08 12:00-2015-12-08 15:00' 
+                    ORDER BY grid,period ASC
+                ");
+                //where period='".$_GET['datePeriod']." ".$timePeriod[0]."-".$_GET['datePeriod']." ".$timePeriod[1]."' 
+//                echo "SELECT grid,count 
+//                    FROM arimaData 
+//                    where period='".$_GET['datePeriod']." ".$timePeriod[0]."-".$_GET['datePeriod']." ".$timePeriod[1]."' 
+//                    ORDER BY grid,period ASC";
+                $i=0;
+                
+                while ($data=mysql_fetch_array($result)){
+                    $trip[$i]=$data;
+                    $i++;
+                }
+                echo @json_encode($trip);
+                break;    
+                
             default : break;
         }
     }

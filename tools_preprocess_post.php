@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -24,8 +24,8 @@
                 break;
             
             case "updateGridArea":
-                $result=mysql_query("UPDATE GRID_AREA SET AREA_NAME=NULL WHERE ID IN(".$_GET["oldGrid"].")");
-                $result1=mysql_query("UPDATE GRID_AREA SET AREA_NAME='".$_GET["areaName"]."' WHERE ID IN(".$_GET["grid"].")");
+                $result=mysql_query("UPDATE GRID_AREA SET AREA_NAME=NULL WHERE ID IN(".$_POST["oldGrid"].")");
+                $result1=mysql_query("UPDATE GRID_AREA SET AREA_NAME='".$_POST["areaName"]."' WHERE ID IN(".$_POST["grid"].")");
                 echo ($result1);
                 break;
             
@@ -36,6 +36,21 @@
 //                }
 //                //print_r($result);
 //                break;
+                
+            //======= JAMIL
+            case "saveArimaData":
+                //print_r($_POST['arimaData']);
+                
+                mysql_query("delete from arimaData"); 
+                
+                for($i=0;$i<sizeof($_POST['arimaData']);$i++){
+                    $data=explode(",",$_POST['arimaData'][$i]);
+                    mysql_query("
+                        INSERT INTO arimaData VALUES(".$data[0].",'".$data[1]."',".$data[2].")
+                    "); 
+                    //echo " INSERT INTO arimaData VALUES(".$data[0].",'".$data[1]."',".$data[2].")";
+                }
+            break;
             
             default : break;
         }

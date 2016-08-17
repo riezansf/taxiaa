@@ -15,9 +15,9 @@
     <script src="util.js"></script> 
     <script src="randomColor.js"></script> 
     
+    <link rel="stylesheet" href="jquery/jquery-ui.css" />
     <link rel="stylesheet" href="leaflet/leaflet.css" />
     <link rel="stylesheet" href="tools_style.css" />
-    <link rel="stylesheet" href="jquery/jquery-ui.min.css" />
 <script>
 //lat = atas-bawah Y, makin kecil makin ke atas (utara)
 //long = kiri-kanan X, makin kecil makin ke kiri (barat)
