@@ -34,7 +34,7 @@ var odLine = new L.FeatureGroup();
 var originClusterMarkers = new L.FeatureGroup(); 
 var destinationClusterMarkers = new L.FeatureGroup(); 
     
-var bandungCentroid=[-6.918744, 107.629810];
+var bandungCentroid=[-6.918744, 107.669810];
 //var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
@@ -63,7 +63,7 @@ function getStyleGrid(color){ return { weight:0.5, color:color, fillColor:color,
     
 function buildMap(bandungCentroid){
     var start = new Date();
-    map = L.map('map').setView(bandungCentroid, 15);
+    map = L.map('map').setView(bandungCentroid, 13);
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         maxZoom: 19,
@@ -175,8 +175,10 @@ function getGridArea(gridId){
     return "Luar Bdg";
   }else{
     for(var j=0;j<dataGridArea.length;j++){
-        if(dataGridArea[j].id.includes(gridId)){
+        var grid=dataGridArea[j].id.split(",");
+        if(grid.indexOf(gridId.toString()) > -1){
             return dataGridArea[j].area_name;
+            break;
         }
     }
     return "Luar Bdg";
@@ -235,21 +237,21 @@ function calculateCentroidOrigin(drawCentroid){
     
 function load_draw_data(data){
     var old_time = new Date();
-    var circle;
+    var circleO; var circleD;
     var pGrid; var dGrid;
     var pArea; var dArea;
+    
+    
     for (var i=0; i<data.length; i++) {
         originPoint.push({location: { accuracy: 1, latitude: data[i].pickup2_lat, longitude: data[i].pickup2_long }});
         destinationPoint.push({location: { accuracy: 1, latitude: data[i].dropoff2_lat, longitude: data[i].dropoff2_long }});
 
         //origin point color is blue
-        circle = L.circle([data[i].pickup2_lat,data[i].pickup2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1}).bindLabel(data[i].trip_id+". "+data[i].pickup2_lat+","+data[i].pickup2_long);
-        originMarkers.addLayer(circle);
-        
+        circleO = L.circle([data[i].pickup2_lat,data[i].pickup2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1});
+       
         //destination point color is green
-        circle = L.circle([data[i].dropoff2_lat,data[i].dropoff2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(data[i].trip_id+". "+data[i].dropoff2_lat+","+data[i].dropoff2_long);
-        destinationMarkers.addLayer(circle);
-        
+        circleD = L.circle([data[i].dropoff2_lat,data[i].dropoff2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(data[i].trip_id+". "+data[i].dropoff2_lat+","+data[i].dropoff2_long);
+         
         pGrid=getGridId(data[i].pickup2_lat,data[i].pickup2_long);
         dGrid=getGridId(data[i].dropoff2_lat,data[i].dropoff2_long);
         pArea=getGridArea(pGrid);
@@ -258,11 +260,16 @@ function load_draw_data(data){
         dataTrip[i]={ 
             id :  data[i].trip_id,
             pickup2_grid100 : pGrid,
-            dropoff2_grid100 : pGrid,
+            dropoff2_grid100 : dGrid,
             pickup2_area : pArea,
             dropoff2_area : dArea
         };
         
+        circleO.bindLabel(data[i].trip_id+". "+pGrid+"("+pArea+") - "+dGrid+"("+dArea+")");
+        originMarkers.addLayer(circleO);
+        
+        circleD.bindLabel(data[i].trip_id+". "+pGrid+"("+pArea+") - "+dGrid+"("+dArea+")");
+        destinationMarkers.addLayer(circleD);
         //console.log(pGrid+"/"+pArea+" to "+dGrid+"/"+dArea);
          
 //        //Draw line origin point to destintion
@@ -278,8 +285,8 @@ function load_draw_data(data){
     }
     
     map.addLayer(originMarkers);
-    map.addLayer(destinationMarkers);
-    map.addLayer(odLine);
+    //map.addLayer(destinationMarkers);
+    //map.addLayer(odLine);
     
     var new_time = new Date();
     console.log("\nTime to read data, draw point, lookup grid & area name = "+(new_time - old_time)+" ms");
@@ -369,7 +376,7 @@ $(document).ready(function() {
             console.log("\nTime to load grid area = "+(new_time - old_time)+" ms");
         
             //load data after getArea finish!
-            $("#loadData").click();
+            //$("#loadData").click();
         }
     );
     
@@ -388,6 +395,10 @@ $(document).ready(function() {
 
                 $.each(data, function (index, value) { data[index]=value; });
 
+                //map.removeLayer(originMarkers);
+                //map.removeLayer(destinationMarkers);
+                //map.removeLayer(odLine);
+            
                 load_draw_data(data);
                 //console.log(dataGridArea);
             
@@ -407,7 +418,7 @@ $(document).ready(function() {
         );  
     });
    
-     $("#updateData").click(function(){
+    $("#updateData").click(function(){
        var old_time = new Date();
          $.ajax({
             type: "POST",
@@ -434,7 +445,6 @@ $(document).ready(function() {
             }
         );  
     });
-    
     
     $("#clustering").click(function(){
         $("#clustering").attr("disabled","true");
@@ -491,6 +501,22 @@ $(document).ready(function() {
     $(document).on("focus", ".area", function(){ //highlight grid
         setStyleSelectedArea($(this),styleSelectedGrid);
         enableSelectGrid(false);
+        
+        var area=$(this).val();
+
+        $.getJSON("tools_preprocess_get.php",{
+                req : "getTrip",
+                startPeriod : $("#startPeriod").val(),
+                endPeriod : $("#endPeriod").val(),
+                area : area
+            },
+            function(data, status){
+                $.each(data, function (index, value) { data[index]=value; });
+
+                load_draw_data(data);
+                //console.log(dataGridArea);
+            }
+        );  
     });
     
     $(document).on("focusout", ".area", function(){ //un-highlight grid 

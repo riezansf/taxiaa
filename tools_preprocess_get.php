@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -8,6 +8,7 @@
         switch($_GET['req']){
             case "getTrip" : 
                 $wherePeriod=(isset($_GET['startPeriod']) && isset($_GET['endPeriod']))? " AND trip_date BETWEEN STR_TO_DATE('".$_GET['startPeriod']."', '%Y-%m-%d') AND STR_TO_DATE('".$_GET['endPeriod']."', '%Y-%m-%d')" : "" ;
+                $whereArea=isset($_GET['area'])? "AND pickup2_area='".$_GET['area']."'" :"";
                 $result=mysql_query("
                     SELECT * FROM trip_12 
                     WHERE 
@@ -15,7 +16,8 @@
                         pickup2_long is not null and pickup2_long!='' and
                         dropoff2_lat is not null and dropoff2_lat!='' and
                         dropoff2_long is not null and dropoff2_long!=''
-                    ".$wherePeriod."
+                        ".$wherePeriod."
+                        ".$whereArea."
                     ORDER BY trip_id
                 ");
                 $i=0;
