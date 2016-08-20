@@ -41,6 +41,15 @@ var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBAN
 
 // Variable for map
 var gridSize=0.001; //aprox 109,5m
+var INDEX=3;
+var pickup_lat="pickup"+INDEX+"_lat";
+var pickup_long="pickup"+INDEX+"_long";
+var dropoff_lat="dropoff"+INDEX+"_lat";
+var dropoff_long="dropoff"+INDEX+"_long"; 
+var pickup_grid100="pickup"+INDEX+"_grid100";
+var dropoff_grid100="dropoff"+INDEX+"_grid100";
+var pickup_area="pickup"+INDEX+"_area";
+var dropoff_area="dropoff"+INDEX+"_area";
     
 var dataTrip=[];    
 var dataGridArea=[];    
@@ -241,29 +250,34 @@ function load_draw_data(data){
     var pGrid; var dGrid;
     var pArea; var dArea;
     
-    
     for (var i=0; i<data.length; i++) {
-        originPoint.push({location: { accuracy: 1, latitude: data[i].pickup2_lat, longitude: data[i].pickup2_long }});
-        destinationPoint.push({location: { accuracy: 1, latitude: data[i].dropoff2_lat, longitude: data[i].dropoff2_long }});
+        originPoint.push({location: { accuracy: 1, latitude: data[i][pickup_lat], longitude: data[i][pickup_long] }});
+        destinationPoint.push({location: { accuracy: 1, latitude: data[i][dropoff_lat], longitude: data[i][dropoff_long] }});
 
         //origin point color is blue
-        circleO = L.circle([data[i].pickup2_lat,data[i].pickup2_long], 5, { color: "blue", fillColor: "blue", fillOpacity: 1});
+        circleO = L.circle([data[i][pickup_lat],data[i][pickup_long]], 5, { color: "blue", fillColor: "blue", fillOpacity: 1});
        
         //destination point color is green
-        circleD = L.circle([data[i].dropoff2_lat,data[i].dropoff2_long], 5, { color: "green", fillColor: "green", fillOpacity: 1}).bindLabel(data[i].trip_id+". "+data[i].dropoff2_lat+","+data[i].dropoff2_long);
+        circleD = L.circle([data[i][dropoff_lat],data[i][dropoff_long]], 5, { color: "green", fillColor: "green", fillOpacity: 1});
          
-        pGrid=getGridId(data[i].pickup2_lat,data[i].pickup2_long);
-        dGrid=getGridId(data[i].dropoff2_lat,data[i].dropoff2_long);
+        pGrid=getGridId(data[i][pickup_lat],data[i][pickup_long]);
+        dGrid=getGridId(data[i][dropoff_lat],data[i][dropoff_long]);
         pArea=getGridArea(pGrid);
         dArea=getGridArea(dGrid);
         
-        dataTrip[i]={ 
-            id :  data[i].trip_id,
-            pickup2_grid100 : pGrid,
-            dropoff2_grid100 : dGrid,
-            pickup2_area : pArea,
-            dropoff2_area : dArea
-        };
+//        dataTrip[i]={ 
+//            id :  data[i].trip_id,
+//            "pickup_grid100" : pGrid,
+//            dropoff_grid100 : dGrid,
+//            pickup_area : pArea,
+//            dropoff_area : dArea
+//        };
+        dataTrip[i]={};
+        dataTrip[i]["id"]=data[i].trip_id;
+        dataTrip[i][pickup_grid100]=pGrid;
+        dataTrip[i][dropoff_grid100]=dGrid;
+        dataTrip[i][pickup_area]=pArea;
+        dataTrip[i][dropoff_area]=dArea;
         
         circleO.bindLabel(data[i].trip_id+". "+pGrid+"("+pArea+") - "+dGrid+"("+dArea+")");
         originMarkers.addLayer(circleO);
@@ -285,7 +299,7 @@ function load_draw_data(data){
     }
     
     map.addLayer(originMarkers);
-    //map.addLayer(destinationMarkers);
+    map.addLayer(destinationMarkers);
     //map.addLayer(odLine);
     
     var new_time = new Date();
@@ -350,7 +364,7 @@ $(document).ready(function() {
     drawGridRectangle(bandungBounds,gridSize);
     
     //get areaname list
-    $.getJSON("tools_preprocess_get.php",{ req : "getGridArea"},
+    $.getJSON("tools_preprocess_get.php",{ req : "getGridArea" , index : INDEX },
         function(data, status){
             var old_time = new Date();
             $.each(data, function (index, value) { data[index]=value; });
@@ -384,6 +398,7 @@ $(document).ready(function() {
         $("#loadData").attr("disabled","true");
 
         $.getJSON("tools_preprocess_get.php",{
+                index : INDEX,
                 req : "getTrip",
                 startPeriod : $("#startPeriod").val(),
                 endPeriod : $("#endPeriod").val()
@@ -399,8 +414,9 @@ $(document).ready(function() {
                 //map.removeLayer(destinationMarkers);
                 //map.removeLayer(odLine);
             
+                
                 load_draw_data(data);
-                //console.log(dataGridArea);
+                console.log(dataTrip);
             
                 //Filter
                 $("#fOriginMarkers").change(function(){
@@ -424,6 +440,7 @@ $(document).ready(function() {
             type: "POST",
             url: "tools_preprocess_post.php",
             data: {
+                index : INDEX,
                 req : "updateTrip",
                 data : dataTrip
             },
@@ -438,6 +455,7 @@ $(document).ready(function() {
     
     $("#exportData").click(function(){
         $.getJSON("tools_preprocess_get.php",{
+                index : INDEX,
                 req : "exportData"
             },
             function(data, status){
@@ -505,6 +523,7 @@ $(document).ready(function() {
         var area=$(this).val();
 
         $.getJSON("tools_preprocess_get.php",{
+                index : INDEX,
                 req : "getTrip",
                 startPeriod : $("#startPeriod").val(),
                 endPeriod : $("#endPeriod").val(),
@@ -545,6 +564,7 @@ $(document).ready(function() {
                 type: "POST",
                 url: "tools_preprocess_post.php",
                 data: {
+                    index : INDEX,
                     req : "updateGridArea",
                     areaName : $(this).parent().prev().children().val(),
                     grid : selectedGrid.toString(),
@@ -583,6 +603,7 @@ $(document).ready(function() {
                 </table>
             </div>
             <hr>
+<!--
             <div id="dbscan">
                 <b>Find Cluster (DBSCAN)</b><br>
                  <table>
@@ -599,6 +620,7 @@ $(document).ready(function() {
                 </table>
             </div>
             <hr>
+-->
             <div id="sp">
                 <b>Location Area</b><br>
                 <table id="tableArea">

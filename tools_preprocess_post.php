@@ -1,23 +1,32 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
 
     if(isset($_POST['req']) && $_POST['req']!=""){
+        
+        $pickup_area="pickup".$_POST['index']."_area";
+        $dropoff_area="dropoff".$_POST['index']."_area";
+        $pickup_lat="pickup".$_POST['index']."_lat";
+        $dropoff_lat="dropoff".$_POST['index']."_lat";
+        $pickup_long="pickup".$_POST['index']."_long";
+        $dropoff_long="dropoff".$_POST['index']."_long";
+        
+        $pickup_grid100="pickup".$_POST['index']."_grid100";
+        $dropoff_grid100="dropoff".$_POST['index']."_grid100";
+        
         switch($_POST['req']){       
             case "updateTrip":
                 $data=$_POST["data"];
                 for($i=0;$i<sizeof($data);$i++){
-
                     $result=mysql_query("
                         UPDATE trip_12 
                         SET 
-                            pickup2_grid100='".$data[$i]["pickup2_grid100"]."' ,
-                            dropoff2_grid100='".$data[$i]["dropoff2_grid100"]."' ,
-                            pickup2_area='".$data[$i]["pickup2_area"]."' ,
-                            dropoff2_area='".$data[$i]["dropoff2_area"]."'
-                        
+                            $pickup_grid100='".$data[$i][$pickup_grid100]."' ,
+                            $dropoff_grid100='".$data[$i]["$dropoff_grid100"]."' ,
+                            $pickup_area='".$data[$i][$pickup_area]."' ,
+                            $dropoff_area='".$data[$i]["$dropoff_area"]."'
                         WHERE trip_id='".$data[$i]["id"]."'");
                 }
                 echo $result;
