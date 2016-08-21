@@ -590,7 +590,7 @@ $(document).ready(function() {
                     <tr>
                         <td>Period</td>
                         <td>
-                            : <input type="text" id="startPeriod" class="date" value="2015-12-1" size=12> - <input type="text" id="endPeriod" class="date" value="2015-12-31" size=12>
+                            : <input type="text" id="startPeriod" class="date" value="2015-12-20"> - <input type="text" id="endPeriod" class="date" value="2015-12-31">
                         </td>
                     </tr>
                     <tr>

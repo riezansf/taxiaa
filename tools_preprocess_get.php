@@ -1,8 +1,9 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
+   
 
     if(isset($_GET['req']) && $_GET['req']!=""){
         $INDEX=$_GET['index'];
@@ -13,24 +14,58 @@
         $pickup_long="pickup".$INDEX."_long";
         $dropoff_long="dropoff".$INDEX."_long";
         
+        function getDay(){
+            $dayTrim="";
+            if(isset($_GET['day']) && $_GET['day']!=''){
+                $day=explode(",",$_GET['day']);
+                for($i=0;$i<sizeof($day);$i++){
+                    $hour=explode("-",$day[$i]);
+                    if($i>0){
+                        $dayTrim.="-";
+                    }
+                    $dayTrim.=$hour[0];
+                }
+            }
+            return $dayTrim;
+        }
+        
+        function getWherePeriod(){
+            $wherePeriod=(isset($_GET['startPeriod']) && isset($_GET['endPeriod']))? " AND trip_date BETWEEN STR_TO_DATE('".$_GET['startPeriod']."', '%Y-%m-%d') AND STR_TO_DATE('".$_GET['endPeriod']."', '%Y-%m-%d')" : "" ;
+            $whereArea=isset($_GET['area'])? "AND $pickup_area='".$_GET['area']."'  " :""; //or $dropoff_area='".$_GET['area']."'
+            $whereWeekday=(isset($_GET['weekday']) && $_GET['weekday']!='') ? "and WEEKDAY(trip_date) in (".$_GET['weekday'].")" : "";
+            $whereDay="";
+            if(isset($_GET['day']) && $_GET['day']!=''){
+                $whereDay=" AND (";
+                $day=explode(",",$_GET['day']);
+                for($i=0;$i<sizeof($day);$i++){
+                    $hour=explode("-",$day[$i]);
+                    if($i>0){
+                        $whereDay.=" OR";
+                    } 
+                    $whereDay.=" (TIME(pickup) between '".$hour[0]."' AND '".$hour[1]."')";
+                }
+                $whereDay.=" ) ";
+            }
+            return $wherePeriod." ".$whereArea." ".$whereWeekday." ".$whereDay; 
+        }
+        
         switch($_GET['req']){
             case "getTrip" : 
-                $wherePeriod=(isset($_GET['startPeriod']) && isset($_GET['endPeriod']))? " AND trip_date BETWEEN STR_TO_DATE('".$_GET['startPeriod']."', '%Y-%m-%d') AND STR_TO_DATE('".$_GET['endPeriod']."', '%Y-%m-%d')" : "" ;
-                $whereArea=isset($_GET['area'])? "AND $pickup_area='".$_GET['area']."'  " :"";
-                //or $dropoff_area='".$_GET['area']."'
-                $result=mysql_query("
+            
+                $query="
                     SELECT * FROM trip_12 
                     WHERE 
                         $pickup_lat is not null and $pickup_long!='' and
                         $pickup_long is not null and $pickup_long!='' and
                         $dropoff_lat is not null and $dropoff_lat!='' and
                         $dropoff_long is not null and $dropoff_long!=''
-                        ".$wherePeriod."
-                        ".$whereArea."
+                        ".getWherePeriod()." 
                     ORDER BY trip_id
-                ");
+                ";
+//                AND $pickup_area='Kebon Jati' AND $dropoff_area='Kebon Jati'
+                //echo $query;
+                $result=mysql_query($query);
                 $i=0;
-                
                 while ($data=mysql_fetch_array($result)){
                     $trip[$i]=$data; $i++;
                 }
@@ -61,14 +96,20 @@
                 WHERE 
                     $pickup_area IS NOT NULL and $pickup_area!='' and 
                     $dropoff_area IS NOT NULL and $dropoff_area!=''
+                    ".getWherePeriod()."
                 ORDER BY $pickup_area,$dropoff_area ASC
                 ");
-            
-                $myfile = fopen("data/area_to_area".$INDEX.".csv", "w") or die("Unable to open file!");
+                
+                $start=explode("-",$_GET['startPeriod'])[2];
+                $end=explode("-",$_GET['endPeriod'])[2];
+                $filename="Gp".$INDEX."_".$start."-".$end."_".str_replace(',', '', $_GET['weekday'])."_".getDay();
+                
+                $myfile = fopen("data/".$filename.".csv", "w") or die("Unable to open file!");
                 while ($data=mysql_fetch_array($result)){
                     fwrite($myfile, $data[$pickup_area].",".$data[$dropoff_area]."\n");
                 }
-                echo fclose($myfile);
+                fclose($myfile);
+                echo @json_encode($filename);
                 break;
                    
             //=============== JAMIL
@@ -84,13 +125,6 @@
                     ORDER BY trip_date,pickup ASC
                 ");
                 $i=0;
-//                echo "
-//                    SELECT * FROM trip_12 
-//                    WHERE 
-//                        pickup2_grid100!='' AND pickup2_grid100 IS NOT NULL
-//                    ".$wherePeriod."
-//                    ORDER BY trip_date,pickup ASC
-//                ";
                 while ($data=mysql_fetch_array($result)){
                     $trip[$i]=$data;
                     $i++;
@@ -107,11 +141,6 @@
                     where period='2015-12-08 12:00-2015-12-08 15:00' 
                     ORDER BY grid,period ASC
                 ");
-                //where period='".$_GET['datePeriod']." ".$timePeriod[0]."-".$_GET['datePeriod']." ".$timePeriod[1]."' 
-//                echo "SELECT grid,count 
-//                    FROM arimaData 
-//                    where period='".$_GET['datePeriod']." ".$timePeriod[0]."-".$_GET['datePeriod']." ".$timePeriod[1]."' 
-//                    ORDER BY grid,period ASC";
                 $i=0;
                 
                 while ($data=mysql_fetch_array($result)){
@@ -120,7 +149,6 @@
                 }
                 echo @json_encode($trip);
                 break;    
-                
             default : break;
         }
     }
