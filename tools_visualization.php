@@ -63,13 +63,14 @@ var dataGridArea=[]; // key : index, value = object{area_name, gridId}
 var originPoint=[]; // key = index , value = origin point
 var destinationPoint=[]; // key = index , value = destination point
 
-var areaGridId=[]; // key = area_name , value gridId
+var areaGridId=[]; // key = area_name , value gridId's
+var areaClusterNumber=[]; // key = area_name , value color
 var areaLatLongO=[]; // key = area_name, value = origin point
 var areaLatLongD=[]; // key = area_name, value = destination point    
 var areaCentroidO=[]; // key = area_name, value = centroid origin point of thoose area
 var areaCentroidD=[]; // key = area_name, value = centroid destination point of thoose area
 var areaCentroidOMarkers=new L.FeatureGroup(); // key = area_name, value = circle object
-var areaCentroidDMarkers=new L.FeatureGroup();
+var areaCentroidDMarkers=new L.FeatureGroup(); // key = area_name, value = circle object
     
 var grid=[]; //key = row & col, value = grid object
 var gridId=[]; // key = gridId, value = grid object
@@ -275,7 +276,6 @@ function calculateCentroidArea(data,originOrDestination){
         areaCentroidDMarkers.addTo(map);
     }
     
-    
     var new_time = new Date();
     console.log("\nCalculate area "+originOrDestination+" origin time = "+(new_time - old_time)+" ms");
 }     
@@ -369,8 +369,7 @@ $(document).ready(function() {
             
             for (var i=0; i<data.length; i++){
                 no=(i+1);
-                color=randomColor();
-
+                //color=randomColor();
 //                grid=data[i].id.split(",");
 //                for(var j=0;j<grid.length;j++){          
 //                    gridId[grid[j]].rectangle.setStyle(getStyleGrid(color)).bindLabel(data[i].area_name+" "+gridId[grid[j]].rectangle.label._content);
@@ -407,15 +406,10 @@ $(document).ready(function() {
             function(data, status){
                 //$("#loadData").attr("value","Data loaded!");
                 $("#footer").show();
-
                 $.each(data, function (index, value) { data[index]=value; });
             
                 load_draw_data(data);
                 
-//                console.log(areaLatLongO);
-//                console.log(areaCentroidO);
-            
-                    
                 //Filter
                 $("#fOriginMarkers").change(function(){
                     if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
@@ -459,7 +453,7 @@ $(document).ready(function() {
     $("#proccess").click(function(){
         //Browse Edge & Nodes
         var csvNode; var csvEdge; var node; var edge;
-        var grid;
+        //var grid;
         
         //map.addLayer(areaCentroidOMarkers);
         //map.addLayer(areaCentroidDMarkers);
@@ -469,73 +463,66 @@ $(document).ready(function() {
             url: "data/"+$("#fileNode").val().split('\\').pop(),
             dataType: "text",
             success: function(data) {
-              csvNode = data.split(/\r\n|\n/);
-               
-              for(var i=1;i<csvNode.length;i++){
-                node=csvNode[i].split(",");
-                //console.log(node[0]+" "+areaGridId[node[0]]);
-              
-                //coloring active grid, with cluster color
-                if(typeof areaGridId[node[0]]!="undefined"){
-                    grid=areaGridId[node[0]].split(",");
-                    for(var j=0;j<grid.length;j++){          
-                        gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[node[1]], fillColor:markerColors[node[1]], fillOpacity:0.3}).bindLabel(node[0]);
-                    }    
+                csvNode = data.split(/\r\n|\n/);
+                
+                for(var i=1;i<csvNode.length;i++){
+                    node=csvNode[i].split(",");
+                    //areaGridColor[node[0]]=randomColor();
+                    //console.log(node[0]+" "+areaGridId[node[0]]);
+
+                    areaClusterNumber[node[0]]=node[1];                  
                 }
-                  
-              }
+                console.log(areaClusterNumber);
+                loadEdge();
             }
          });
         
+        
+    });
+    
+    function loadEdge(){
         $.ajax({
             type: "GET",
             url: "data/"+$("#fileEdge").val().split('\\').pop(),
             dataType: "text",
             success: function(data) {
-                csvEdge= data.split(/\r\n|\n/);
-                
-                
-                
+                csvEdge= data.split(/\r\n|\n/);                
                 var areaToAreaLine= new L.FeatureGroup();
-                console.log(areaCentroidO);
+                //console.log(areaCentroidO);
+                
                 for(var i=1;i<csvEdge.length;i++){
                     edge=csvEdge[i].split(",");
                     //console.log(node[0]+" "+areaGridId[node[0]]);
 
-                    //coloring active grid, with cluster color
-//                    if(typeof areaGridId[node[0]]!="undefined"){
-//                        grid=areaGridId[node[0]].split(",");
-//                        for(var j=0;j<grid.length;j++){          
-//                            gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[node[1]], fillColor:markerColors[node[1]], fillOpacity:0.3}).bindLabel(node[0]);
-//                        }    
-//                    }
+                    //TODO remove inactive grid, after weight filtering >1
+                    //remove inactive o-d point after weight filtering >1
+                    //circle size : Origin degree out , Destination degree in
+                    //line = edge weight 
                     
-//                    console.log(edge[0]);    
-//                    console.log(areaCentroidO[edge[0]]);  
-                    
-              
-                    
+                    //add filter show/hide only 1 cluster
+                    //add filter edge weight
+    
                    if(edge[0]!=edge[1] && edge[0]!="" && edge[1]!="" && parseFloat(edge[2])>1){
-//                        var polyline = L.polyline(
-//                            [ 
-//                              new L.LatLng(areaCentroidO[edge[0]].split(",")[0],areaCentroidO[edge[0]].split(",")[1])  ,
-//                              new L.LatLng(areaCentroidD[edge[1]].split(",")[0],areaCentroidD[edge[1]].split(",")[1])
-//                            ], 
-//                            { color: 'red', weight: parseFloat(edge[2])*2, opacity : 0.5 }
-//                        );
-//                       
-//                        var decorator = L.polylineDecorator(polyline, {
-//                            patterns: [
-//                                // defines a pattern of 10px-wide dashes, repeated every 20px on the line
-//                                {offset: 0, repeat: 1, symbol: L.Symbol.arrowHead({pixelSize: 10})}
-//                            ]
-//                        });
-//                       
-//                        areaToAreaLine.addLayer(decorator); 
+                        
+                        //coloring active grid, with cluster color
+                        if(typeof areaGridId[edge[0]]!="undefined" && typeof areaGridId[edge[1]]!="undefined"){
+                            //console.log(activeArea=activeArea+1);
+                            console.log(edge[0]+"-"+edge[1]);
+                            //console.log(areaClusterNumber[node[0]]);
+                            //active area origin
+                            var grid=areaGridId[edge[0]].split(",");
+                            for(var j=0;j<grid.length;j++){          
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[0]]], fillColor:markerColors[areaClusterNumber[edge[0]]], fillOpacity:0.3}).bindLabel(areaClusterNumber[edge[0]]+" "+edge[0]);
+                            } 
+                            
+                            //active area destination
+                            var grid=areaGridId[edge[1]].split(",");
+                            for(var j=0;j<grid.length;j++){          
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[1]]], fillColor:markerColors[areaClusterNumber[edge[1]]], fillOpacity:0.3}).bindLabel(areaClusterNumber[edge[1]]+" "+edge[1]);
+                            }
+                        }
                        
-                       
-                       
-                             //Polylines with Arrow
+                       //Polylines with Arrow
                         var arrowPolyline = L.Polyline.extend({
                             addArrows: function(){
                                 var points = this.getLatLngs()
@@ -562,7 +549,8 @@ $(document).ready(function() {
                                   new L.LatLng(areaCentroidO[edge[0]].split(",")[0],areaCentroidO[edge[0]].split(",")[1]),
                                   new L.LatLng(areaCentroidD[edge[1]].split(",")[0],areaCentroidD[edge[1]].split(",")[1])
                                 ];
-                        var polyline = new arrowPolyline(latlngs, {color: "red",weight: parseFloat(edge[2]),opacity:0.5}).addTo(map);
+                        var polyline = new arrowPolyline(latlngs, {color: "red",weight: parseInt(edge[2]),opacity:0.5}).addTo(map);
+                        polyline.bindLabel(edge[2]+" trip");
                         polyline.addArrows();
                         //areaToAreaLine.addLayer(polyline.addArrows()); 
                        
@@ -571,7 +559,7 @@ $(document).ready(function() {
                 map.addLayer(areaToAreaLine);
             }
          });
-    });
+    }
    
     
 });
@@ -611,8 +599,10 @@ $(document).ready(function() {
                             <input type="checkbox" name="day[]" value="10-14" checked="true"> (10-14) Siang <br>
                             <input type="checkbox" name="day[]" value="14-18" checked="true"> (14-18) Sore <br>
                             <input type="checkbox" name="day[]" value="18-24" checked="true"> (18-24) Malam <br>
+<!--
                             <input type="text" id="amount" value="12 - 18" readonly style="border:0; font-weight:bold;width:50px;">
                             <div id="slider-range" ></div>
+-->
                         </td>
                         <td valign="top">
                             
@@ -652,6 +642,15 @@ $(document).ready(function() {
                     <tr>
                         <td colspan="2"><input type="button" id="proccess" value="Process"></td>
                     </tr>
+                    <tr>
+                        <td colspan="2" id="filterCluster">
+                            Show/Hide Cluster
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" id="filterTrip">
+                            Filter Trip Count
+                        </td>
                 </table>
             </div>
         </div>

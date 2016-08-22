@@ -597,7 +597,7 @@ $(document).ready(function() {
                         <td colspan="2">
                             <input type="button" id="loadData" value="Load Data">
                             <input type="button" id="updateData" value="Update Data" disabled>
-                            <input type="button" id="exportData" value="Expost CSV area pair">
+<!--                            <input type="button" id="exportData" value="Expost CSV area pair">-->
                         </td>
                     </tr>
                 </table>

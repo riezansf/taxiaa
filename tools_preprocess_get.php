@@ -3,7 +3,7 @@
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
-   
+        
 
     if(isset($_GET['req']) && $_GET['req']!=""){
         $INDEX=$_GET['index'];
@@ -30,6 +30,16 @@
         }
         
         function getWherePeriod(){
+            //echo $pickup_area;
+            
+            $INDEX=$_GET['index'];
+            $pickup_area="pickup".$INDEX."_area";
+            $dropoff_area="dropoff".$INDEX."_area";
+            $pickup_lat="pickup".$INDEX."_lat";
+            $dropoff_lat="dropoff".$INDEX."_lat";
+            $pickup_long="pickup".$INDEX."_long";
+            $dropoff_long="dropoff".$INDEX."_long";
+            
             $wherePeriod=(isset($_GET['startPeriod']) && isset($_GET['endPeriod']))? " AND trip_date BETWEEN STR_TO_DATE('".$_GET['startPeriod']."', '%Y-%m-%d') AND STR_TO_DATE('".$_GET['endPeriod']."', '%Y-%m-%d')" : "" ;
             $whereArea=isset($_GET['area'])? "AND $pickup_area='".$_GET['area']."'  " :""; //or $dropoff_area='".$_GET['area']."'
             $whereWeekday=(isset($_GET['weekday']) && $_GET['weekday']!='') ? "and WEEKDAY(trip_date) in (".$_GET['weekday'].")" : "";
@@ -51,7 +61,7 @@
         
         switch($_GET['req']){
             case "getTrip" : 
-            
+                
                 $query="
                     SELECT * FROM trip_12 
                     WHERE 
