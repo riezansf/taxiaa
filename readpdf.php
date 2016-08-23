@@ -3,19 +3,14 @@ include 'vendor/autoload.php';
 $parser = new \Smalot\PdfParser\Parser();
 function printArray($array){ echo "<pre>"; print_r($array); echo "</pre>";}
 
-//---------
-
 $no=1;
 $fileNo=1;
 $countFile=0;
 foreach(glob('dataperhari/*.*') as $file) {
     if(strpos($file, '1 1') !== false){ $countFile++; }
-    echo "<br>".$fileNo++.". ".$file."<br>";
-    
     $pdf    = $parser->parseFile($file);
     $line   = explode("\n",$pdf->getText());
-    //printArray($line);
-
+  
     echo "DATE | TAXI_NUMBER | START_TRIP | END_TRIP | PAID_KM | AMOUNT<br>";
     
     for($i=0;$i<sizeof($line);$i++){ //exclude last line
@@ -62,6 +57,9 @@ foreach(glob('dataperhari/*.*') as $file) {
     }
 } echo "92 : ".$countFile;
 ?>
+
+  //printArray($line);
+    echo "<br>".$fileNo++.". ".$file."<br>";
 
 
 

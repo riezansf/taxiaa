@@ -79,7 +79,7 @@ var gridId=[]; // key = gridId, value = grid object
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
 
-var styleGrid={weight:0.5, color:'grey',fillColor:'grey',fillOpacity:0.01};
+var styleGrid={weight:1, color:'grey',fillColor:'grey',fillOpacity:0.01};
 var styleSelectedGrid={weight:0.5, color:'red', fillColor:'red', fillOpacity:0.8};
 function getStyleGrid(color){ return { weight:0.5, color:color, fillColor:color, fillOpacity:0.3};}    
     
