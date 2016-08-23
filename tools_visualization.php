@@ -512,13 +512,13 @@ $(document).ready(function() {
                             //active area origin
                             var grid=areaGridId[edge[0]].split(",");
                             for(var j=0;j<grid.length;j++){          
-                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[0]]], fillColor:markerColors[areaClusterNumber[edge[0]]], fillOpacity:0.3}).bindLabel(areaClusterNumber[edge[0]]+" "+edge[0]);
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[0]]], fillColor:markerColors[areaClusterNumber[edge[0]]], fillOpacity:0.8}).bindLabel(areaClusterNumber[edge[0]]+" "+edge[0]);
                             } 
                             
                             //active area destination
                             var grid=areaGridId[edge[1]].split(",");
                             for(var j=0;j<grid.length;j++){          
-                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[1]]], fillColor:markerColors[areaClusterNumber[edge[1]]], fillOpacity:0.3}).bindLabel(areaClusterNumber[edge[1]]+" "+edge[1]);
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[1]]], fillColor:markerColors[areaClusterNumber[edge[1]]], fillOpacity:0.8}).bindLabel(areaClusterNumber[edge[1]]+" "+edge[1]);
                             }
                         }
                        
