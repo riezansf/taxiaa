@@ -1,9 +1,7 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
-
-        
 
     if(isset($_GET['req']) && $_GET['req']!=""){
         $INDEX=$_GET['index'];
@@ -61,7 +59,6 @@
         
         switch($_GET['req']){
             case "getTrip" : 
-                
                 $query="
                     SELECT * FROM trip_12 
                     WHERE 
@@ -82,6 +79,26 @@
                 echo @json_encode($trip);
                 break;
                 
+            case "getCountTrip" : 
+                $query="
+                    select $pickup_area, $dropoff_area, count(*) weight 
+                    from trip_12 
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                    group by $pickup_area, $dropoff_area
+                    ORDER BY $pickup_area, $dropoff_area
+                ";
+                $result=mysql_query($query);
+                $i=0;
+                while ($data=mysql_fetch_array($result)){
+                    $trip[$i]=$data; $i++;
+                }
+                echo @json_encode($trip);
+                break; 
             case "getGridArea" :
                 mysql_query("SET SESSION group_concat_max_len = 1000000");
                 $result=mysql_query("

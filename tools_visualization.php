@@ -16,6 +16,7 @@
     <script src="Leaflet.PolylineDecorator/L.RotatedMarker.js"></script>
     <script src="Leaflet.PolylineDecorator/L.Symbol.js"></script>
 <!--    <script type="text/javascript" src="jDBSCAN/jDBSCAN.js"></script>-->
+    <script src="jLouvain.js"></script> 
     <script src="util.js"></script> 
     <script src="randomColor.js"></script> 
     
@@ -74,6 +75,11 @@ var areaCentroidDMarkers=new L.FeatureGroup(); // key = area_name, value = circl
     
 var grid=[]; //key = row & col, value = grid object
 var gridId=[]; // key = gridId, value = grid object
+
+//graph
+var node_data_o = []; // any type of string can be used as id
+var node_data_d = [];
+var edge_data = [];
 
     
 var pointMappedToGridO=0;
@@ -330,6 +336,10 @@ function load_draw_data(data){
         
         if(areaLatLongD[data[i][dropoff_area]]==null){ areaLatLongD[data[i][dropoff_area]]=[] }
         areaLatLongD[data[i][dropoff_area]].push(data[i][dropoff_lat]+","+data[i][dropoff_long]);
+        
+        node_data_o.push(data[i][pickup_area]);
+        node_data_d.push(data[i][dropoff_area]);
+    
     }
     
     //calculate centroid point in each area
@@ -347,15 +357,25 @@ function load_draw_data(data){
          
 $(document).ready(function() { 
     $(".date").datepicker({ dateFormat: 'yy-mm-dd', minDate : '2015-12-1', maxDate : '2015-12-31'});
-    $( "#slider-range" ).slider({
-      range: true,
-      min: 0,
-      max: 24,
-      values: [ 12, 18 ],
+    $( "#slider-range" ).slider({ range: true, min: 0, max: 24, values: [ 12, 18 ],
       slide: function( event, ui ) {
         $( "#amount" ).val( ui.values[ 0 ] + " - " + ui.values[ 1 ] );
       }
-    });        
+    }); 
+    function getCheckedWeekday(){
+        //$("#loadData").attr("disabled","true");
+        var checkedWeekday = [];
+        $("input[name='weekday[]']:checked").each(function () { checkedWeekday.push(parseInt($(this).val())); });
+        
+        return checkedWeekday;
+    }
+    
+    function getCheckedDay(){
+        var checkedDay = [];
+        $("input[name='day[]']:checked").each(function () { checkedDay.push($(this).val()); });
+        
+        return checkedDay;
+    }
     
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
@@ -374,7 +394,6 @@ $(document).ready(function() {
 //                for(var j=0;j<grid.length;j++){          
 //                    gridId[grid[j]].rectangle.setStyle(getStyleGrid(color)).bindLabel(data[i].area_name+" "+gridId[grid[j]].rectangle.label._content);
 //                }
-
                 areaGridId[data[i].area_name.replace(/ /g,'')]=data[i].id;    
             }
             dataGridArea=data;
@@ -388,28 +407,22 @@ $(document).ready(function() {
     );
     
     $("#loadData").click(function(){
-        //$("#loadData").attr("disabled","true");
-        var checkedWeekday = [];
-        $("input[name='weekday[]']:checked").each(function () { checkedWeekday.push(parseInt($(this).val())); });
-        
-        var checkedDay = [];
-        $("input[name='day[]']:checked").each(function () { checkedDay.push($(this).val()); });
-        
         $.getJSON("tools_preprocess_get.php",{
                 index : INDEX,
                 req : "getTrip",
                 startPeriod : $("#startPeriod").val(),
                 endPeriod : $("#endPeriod").val(),
-                weekday : checkedWeekday.join(","),
-                day : checkedDay.join(",")
+                weekday : getCheckedWeekday,
+                day : getCheckedDay
             },
             function(data, status){
                 //$("#loadData").attr("value","Data loaded!");
                 $("#footer").show();
                 $.each(data, function (index, value) { data[index]=value; });
-            
-                load_draw_data(data);
-                
+        
+                load_draw_data(data);     
+                getEdge();
+
                 //Filter
                 $("#fOriginMarkers").change(function(){
                     if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
@@ -419,12 +432,62 @@ $(document).ready(function() {
                 });
                 $("#fOdLine").change(function(){
                     if(this.checked) { map.addLayer(odLine); }else{ map.removeLayer(odLine); }
-                });
-                
+                });         
             }
         );  
     });
+    
+    function getEdge(){
+         $.getJSON("tools_preprocess_get.php",{
+                index : INDEX,
+                req : "getCountTrip",
+                startPeriod : $("#startPeriod").val(),
+                endPeriod : $("#endPeriod").val(),
+                weekday : getCheckedWeekday,
+                day : getCheckedDay
+            },
+            function(data, status){
+                $.each(data, function (index, value) { data[index]=value; });
+                
+                for(var i=0;i<data.length;i++){
+                    edge_data.push({
+                        source : data[i][pickup_area].replace(/ /g,''),
+                        target : data[i][dropoff_area].replace(/ /g,''),
+                        weight : parseFloat(data[i]["weight"])
+                    });
+                } 
+             
+//                //jLouvain
+//                var node = node_data_o.concat(node_data_d).getUnique();
+//                var community = jLouvain().nodes(node).edges(edge_data);
+//                var result  = community();
+//                console.log(node);
+//               // console.log(areaGridId);
+//             
+//        
+//                for (var key in result) {
+//                  if (result.hasOwnProperty(key)) {
+//                    //console.log(key + " -> " + result[key]);
+//                    if(typeof areaGridId[key.replace(/ /g,'')]!="undefined"){
+//                        var grid=areaGridId[key.replace(/ /g,'')].split(",");
+//                        
+//                        //console.log(grid);
+//                        for(var j=0;j<grid.length;j++){          
+//                            gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[key]], fillColor:markerColors[result[key]], fillOpacity:0.8}).bindLabel(result[key]+" "+key);
+//                        } 
+//                    }
+//                    
+//                  }
+//                }
+//             
+//             
+//                console.log(dataGridArea);
+            }
+        );
+    }
    
+    
+    
     $("#exportData").click(function(){
         var old_time = new Date();
         var checkedWeekday = [];
@@ -476,8 +539,7 @@ $(document).ready(function() {
                 loadEdge();
             }
          });
-        
-        
+
     });
     
     function loadEdge(){
@@ -553,14 +615,13 @@ $(document).ready(function() {
                         polyline.bindLabel(edge[2]+" trip");
                         polyline.addArrows();
                         //areaToAreaLine.addLayer(polyline.addArrows()); 
-                       
+                        //end of draw polyline
                    }
                 }
-                map.addLayer(areaToAreaLine);
+                //map.addLayer(areaToAreaLine);
             }
          });
     }
-   
     
 });
 </script> 
