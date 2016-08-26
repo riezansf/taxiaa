@@ -342,18 +342,7 @@ function load_draw_data(data){
     console.log("\nTime to read data, draw point = "+(new_time - old_time)+" ms");
     console.log("Origin point "+originPoint.length+" , Destination point : "+destinationPoint.length);
 }       
-
-function getCheckedWeekday(){
-    var checkedWeekday = [];
-    $("input[name='weekday[]']:checked").each(function () { checkedWeekday.push(parseInt($(this).val())); });
-    return checkedWeekday;
-}
-function getCheckedDay(){
-    var checkedDay = [];
-    $("input[name='day[]']:checked").each(function () { checkedDay.push($(this).val()); });
-    return checkedDay;
-}  
-    
+         
 $(document).ready(function() { 
     $(".date").datepicker({ dateFormat: 'yy-mm-dd', minDate : '2015-12-1', maxDate : '2015-12-31'});
     $( "#slider-range" ).slider({ range: true, min: 0, max: 24, values: [ 12, 18 ],
@@ -361,7 +350,20 @@ $(document).ready(function() {
         $( "#amount" ).val( ui.values[ 0 ] + " - " + ui.values[ 1 ] );
       }
     }); 
-   
+    function getCheckedWeekday(){
+        //$("#loadData").attr("disabled","true");
+        var checkedWeekday = [];
+        $("input[name='weekday[]']:checked").each(function () { checkedWeekday.push(parseInt($(this).val())); });
+        
+        return checkedWeekday;
+    }
+    
+    function getCheckedDay(){
+        var checkedDay = [];
+        $("input[name='day[]']:checked").each(function () { checkedDay.push($(this).val()); });
+        
+        return checkedDay;
+    }
     
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
@@ -371,19 +373,18 @@ $(document).ready(function() {
         function(data, status){
             var old_time = new Date();
             $.each(data, function (index, value) { data[index]=value; });
-            //var no; var grid; var color;
+            var no; var grid; var color;
             
             for (var i=0; i<data.length; i++){
-                //no=(i+1);
+                no=(i+1);
                 //color=randomColor();
 //                grid=data[i].id.split(",");
 //                for(var j=0;j<grid.length;j++){          
 //                    gridId[grid[j]].rectangle.setStyle(getStyleGrid(color)).bindLabel(data[i].area_name+" "+gridId[grid[j]].rectangle.label._content);
 //                }
-                
-                areaGridId[data[i].area_name.replace(/ /g,'')]=data[i].id;  // key = area_name , value gridId's     
+                areaGridId[data[i].area_name.replace(/ /g,'')]=data[i].id;    
             }
-            dataGridArea=data; // key : index, value = object{area_name, gridId}
+            dataGridArea=data;
             
             var new_time = new Date();
             console.log("\nTime to load grid area = "+(new_time - old_time)+" ms");
@@ -404,14 +405,12 @@ $(document).ready(function() {
             },
             function(data, status){
                 //$("#loadData").attr("value","Data loaded!");
-               
+                $("#footer").show();
                 $.each(data, function (index, value) { data[index]=value; });
         
                 load_draw_data(data);     
-                getEdge();
-
+                
                 //Filter
-                $("#footer").show();
                 $("#fOriginMarkers").change(function(){
                     if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
                 });
@@ -425,107 +424,142 @@ $(document).ready(function() {
         );  
     });
     
-    function getEdge(){
-         $.getJSON("tools_preprocess_get.php",{
+
+    $("#exportData").click(function(){
+        var old_time = new Date();
+        var checkedWeekday = [];
+        $("input[name='weekday[]']:checked").each(function () { checkedWeekday.push(parseInt($(this).val())); });
+        
+        var checkedDay = [];
+        $("input[name='day[]']:checked").each(function () { checkedDay.push($(this).val()); });
+        
+        $.getJSON("tools_preprocess_get.php",{
                 index : INDEX,
-                req : "getCountTrip",
+                req : "exportData",
                 startPeriod : $("#startPeriod").val(),
                 endPeriod : $("#endPeriod").val(),
-                weekday : getCheckedWeekday,
-                day : getCheckedDay
+                weekday : checkedWeekday.join(","),
+                day : checkedDay.join(",")
             },
             function(data, status){
-                $.each(data, function (index, value) { data[index]=value; });
+                if(status=="success"){
+                    var new_time = new Date();
+                    console.log("Export to csv success "+(new_time - old_time)+" ms");
+                }
+            }
+        );  
+    });
+    
+    $("#proccess").click(function(){
+        //Browse Edge & Nodes
+        var csvNode; var csvEdge; var node; var edge;
+        //var grid;
+        
+        //map.addLayer(areaCentroidOMarkers);
+        //map.addLayer(areaCentroidDMarkers);
+        
+         $.ajax({
+            type: "GET",
+            url: "data/"+$("#fileNode").val().split('\\').pop(),
+            dataType: "text",
+            success: function(data) {
+                csvNode = data.split(/\r\n|\n/);
                 
-                for(var i=0;i<data.length;i++){
-                    edge_data.push({
-                        source : data[i][pickup_area].replace(/ /g,''),
-                        target : data[i][dropoff_area].replace(/ /g,''),
-                        weight : parseFloat(data[i]["weight"])
-                    });
-                } 
-             
-                //jLouvain
-                var node = node_data_o.concat(node_data_d).getUnique();
-                var community = jLouvain().nodes(node).edges(edge_data);
-                var result  = community();
-                console.log(result);
-             
-                for(var i=0;i<edge_data.length;i++){
+                for(var i=1;i<csvNode.length;i++){
+                    node=csvNode[i].split(",");
+                    //areaGridColor[node[0]]=randomColor();
+                    //console.log(node[0]+" "+areaGridId[node[0]]);
+
+                    areaClusterNumber[node[0]]=node[1];                  
+                }
+                console.log(areaClusterNumber);
+                loadEdge();
+            }
+         });
+
+    });
+    
+    function loadEdge(){
+        $.ajax({
+            type: "GET",
+            url: "data/"+$("#fileEdge").val().split('\\').pop(),
+            dataType: "text",
+            success: function(data) {
+                csvEdge= data.split(/\r\n|\n/);                
+                var areaToAreaLine= new L.FeatureGroup();
+                //console.log(areaCentroidO);
                 
-                    //=========================== TODO
-                    //create grid luarbandung
-                    //area luar bandung labeling
-                    
-                    //toggle show hide grid
-                    //toggle show hide O, D, line, Marker
-                    //toggle show hide Centroid O, Centroid D
-                    
+                for(var i=1;i<csvEdge.length;i++){
+                    edge=csvEdge[i].split(",");
+                    //console.log(node[0]+" "+areaGridId[node[0]]);
+
+                    //TODO remove inactive grid, after weight filtering >1
                     //remove inactive o-d point after weight filtering >1
                     //circle size : Origin degree out , Destination degree in
                     //line = edge weight 
                     
-                    //add filter show/hide only 1 cluster to show
+                    //add filter show/hide only 1 cluster
                     //add filter edge weight
-                    
     
-                   if(edge_data[i].source!=edge_data[i].target && edge_data[i].weight>1){
+                   if(edge[0]!=edge[1] && edge[0]!="" && edge[1]!="" && parseFloat(edge[2])>1){
+                        
                         //coloring active grid, with cluster color
-                        if(typeof areaGridId[edge_data[i].source]!="undefined" && typeof areaGridId[edge_data[i].target]!="undefined"){                
-                            console.log(edge_data[i].source+"["+result[edge_data[i].source]+"] > "+edge_data[i].target+"["+result[edge_data[i].target]+"] "+edge_data[i].weight);
-                            
-                            //active grid origin
-                            var grid=areaGridId[edge_data[i].source.replace(/ /g,'')].split(",");
+                        if(typeof areaGridId[edge[0]]!="undefined" && typeof areaGridId[edge[1]]!="undefined"){
+                            //console.log(activeArea=activeArea+1);
+                            console.log(edge[0]+" > "+edge[1]+" "+edge[2]);
+                            //console.log(areaClusterNumber[node[0]]);
+                            //active area origin
+                            var grid=areaGridId[edge[0]].split(",");
                             for(var j=0;j<grid.length;j++){          
-                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].source]], fillColor:markerColors[result[edge_data[i].source]], fillOpacity:0.8}).bindLabel(edge_data[i].source);
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[0]]], fillColor:markerColors[areaClusterNumber[edge[0]]], fillOpacity:0.8}).bindLabel(areaClusterNumber[edge[0]]+" "+edge[0]);
                             } 
                             
-                            //active grid destination
-                            var grid=areaGridId[edge_data[i].target.replace(/ /g,'')].split(",");
+                            //active area destination
+                            var grid=areaGridId[edge[1]].split(",");
                             for(var j=0;j<grid.length;j++){          
-                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].target]], fillColor:markerColors[result[edge_data[i].target]], fillOpacity:0.8}).bindLabel(edge_data[i].target);
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[areaClusterNumber[edge[1]]], fillColor:markerColors[areaClusterNumber[edge[1]]], fillOpacity:0.8}).bindLabel(areaClusterNumber[edge[1]]+" "+edge[1]);
                             }
-                            
-                            //Polylines with Arrow
-                            var arrowPolyline = L.Polyline.extend({
-                                addArrows: function(){
-                                    var points = this.getLatLngs()
-                                    for (var p = 0; p +1 < points.length; p++){
-
-                                        var diffLat = points[p+1]["lat"] - points[p]["lat"]
-                                        var diffLng = points[p+1]["lng"] - points[p]["lng"]
-                                        var center = [points[p]["lat"] + diffLat/2,points[p]["lng"] + diffLng/2]
-
-                                        var angle = 360 - (Math.atan2(diffLat, diffLng)*57.295779513082)
-
-                                        var arrowM = new L.marker(center,{
-                                           icon: new L.divIcon({ 
-                                                className : "arrowIcon",
-                                                iconSize: new L.Point(30,30), 
-                                                iconAnchor: new L.Point(15,15), 
-                                                html : "<div style = 'font-size: 20px; -webkit-transform: rotate("+ angle +"deg)'>&#10152;</div>"
-                                           })
-                                        }).addTo(map);
-                                   }
-                                }
-                            });
-                            var latlngs =  [ 
-                                      new L.LatLng(areaCentroidO[edge_data[i].source].split(",")[0],areaCentroidO[edge_data[i].source].split(",")[1]),
-                                      new L.LatLng(areaCentroidD[edge_data[i].target].split(",")[0],areaCentroidD[edge_data[i].target].split(",")[1])
-                                    ];
-                            var polyline = new arrowPolyline(latlngs, {color: "red",weight: parseInt(edge_data[i].weight),opacity:0.5}).addTo(map);
-                            polyline.bindLabel(edge_data[i].weight+" trip");
-                            polyline.addArrows();
-                            //areaToAreaLine.addLayer(polyline.addArrows()); 
-                            //end of draw polyline
-
                         }
+                       
+                       //Polylines with Arrow
+                        var arrowPolyline = L.Polyline.extend({
+                            addArrows: function(){
+                                var points = this.getLatLngs()
+                                for (var p = 0; p +1 < points.length; p++){
+
+                                    var diffLat = points[p+1]["lat"] - points[p]["lat"]
+                                    var diffLng = points[p+1]["lng"] - points[p]["lng"]
+                                    var center = [points[p]["lat"] + diffLat/2,points[p]["lng"] + diffLng/2]
+
+                                    var angle = 360 - (Math.atan2(diffLat, diffLng)*57.295779513082)
+
+                                    var arrowM = new L.marker(center,{
+                                       icon: new L.divIcon({ 
+                                            className : "arrowIcon",
+                                            iconSize: new L.Point(30,30), 
+                                            iconAnchor: new L.Point(15,15), 
+                                            html : "<div style = 'font-size: 20px; -webkit-transform: rotate("+ angle +"deg)'>&#10152;</div>"
+                                       })
+                                    }).addTo(map);
+                               }
+                            }
+                        });
+                        var latlngs =  [ 
+                                  new L.LatLng(areaCentroidO[edge[0]].split(",")[0],areaCentroidO[edge[0]].split(",")[1]),
+                                  new L.LatLng(areaCentroidD[edge[1]].split(",")[0],areaCentroidD[edge[1]].split(",")[1])
+                                ];
+                        var polyline = new arrowPolyline(latlngs, {color: "red",weight: parseInt(edge[2]),opacity:0.5}).addTo(map);
+                        polyline.bindLabel(edge[2]+" trip");
+                        polyline.addArrows();
+                        //areaToAreaLine.addLayer(polyline.addArrows()); 
+                        //end of draw polyline
                    }
                 }
                 //map.addLayer(areaToAreaLine);
             }
-        );
-    }    
+         });
+    }
+    
 });
 </script> 
 </head>
@@ -575,6 +609,7 @@ $(document).ready(function() {
                     <tr>
                         <td colspan="4">
                             <input type="button" id="loadData" value="Load Data">
+                            <input type="button" id="exportData" value="Export CSV Gephi">
                         </td>
                     </tr>
                     
@@ -584,6 +619,24 @@ $(document).ready(function() {
             <div id="clustering">
                 <b>Visualize Graph Cluster</b><br>
                  <table>
+                    <tr>
+                        <td>
+                            Node : <input type="file" id="fileNode" name="node"><br>
+                            Edge : <input type="file" id="fileEdge" name="edge"><br>
+                            <br>
+<!--
+                            Load node-edge<br>
+                            Hightlight active area<br>
+                            Cluster coloring<br>
+                            Calculate centroid point area<br>
+                            Draw line, weight
+                            
+                            Filter checkbox show/hide cluster
+                            Filter edge weight
+-->
+                        </td>
+                        <td></td>
+                    </tr>
                     <tr>
                         <td colspan="2"><input type="button" id="proccess" value="Process"></td>
                     </tr>
@@ -607,11 +660,15 @@ $(document).ready(function() {
                 <b>Filter</b><br>
                 
                 <div id="filterLoadData">
-                    <input type="checkbox" id="fOriginMarkers" value="originMarkers" > Origin Marker <br>
-                    <input type="checkbox" id="fDestinationMarkers" value="destinationMarkers" > Destination Marker <br>
-                    <input type="checkbox" id="fOdLine" value="fOdLine" > Line <br>
+                    <input type="checkbox" id="fOriginMarkers" value="originMarkers" checked="true"> Origin Marker <br>
+                    <input type="checkbox" id="fDestinationMarkers" value="destinationMarkers" checked="true"> Destination Marker <br>
+                    <input type="checkbox" id="fOdLine" value="fOdLine" checked="true"> Line <br>
                 </div>
-            
+                
+                <div id="filterClusteringResult" hidden>
+                    <input type="checkbox" id="fOriginCluterMarkers" value="originCluterMarkers" checked="true"> Origin Cluter Marker <br>
+                    <input type="checkbox" id="fOdestinationCluterMarkers" value="destinationCluterMarkers" checked="true"> Destination Cluter Marker <br>
+                </div>
 <!--                <div id="toggle">Toggle</div>-->
             </div>
         </div>  
