@@ -362,10 +362,10 @@ $(document).ready(function() {
                         //console.log(color);
                         
                         if(data[i].count!=0){
-                            //gridId[data[i].grid].rectangle.setStyle({fillColor:color,fillOpacity:0.5}).bindLabel(data[i].count);    
+                            gridId[data[i].grid].rectangle.setStyle({fillColor:color,fillOpacity:0.5}).bindLabel(data[i].count);    
                         }
                         
-                         console.log(data[i].count);
+                        console.log(data[i].count);
                         if(parseInt(data[i].count)>max){
                             max=data[i].count;
                         }

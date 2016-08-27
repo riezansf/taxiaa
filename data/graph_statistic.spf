@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ContentFilters</key>
+	<dict/>
+	<key>auto_connect</key>
+	<true/>
+	<key>data</key>
+	<dict>
+		<key>connection</key>
+		<dict>
+			<key>database</key>
+			<string>taxiaa</string>
+			<key>host</key>
+			<string>127.0.0.1</string>
+			<key>kcid</key>
+			<string>1764339958660806768</string>
+			<key>name</key>
+			<string>AATAKSI</string>
+			<key>rdbms_type</key>
+			<string>mysql</string>
+			<key>sslCACertFileLocation</key>
+			<string></string>
+			<key>sslCACertFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslCertificateFileLocation</key>
+			<string></string>
+			<key>sslCertificateFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslKeyFileLocation</key>
+			<string></string>
+			<key>sslKeyFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>type</key>
+			<string>SPTCPIPConnection</string>
+			<key>useSSL</key>
+			<integer>0</integer>
+			<key>user</key>
+			<string>root</string>
+		</dict>
+		<key>session</key>
+		<dict>
+			<key>connectionEncoding</key>
+			<string>latin1</string>
+			<key>contentFilter</key>
+			<dict>
+				<key>filterComparison</key>
+				<string>=</string>
+				<key>filterComparisonTag</key>
+				<integer>0</integer>
+				<key>filterField</key>
+				<string>trip_id</string>
+				<key>filterValue</key>
+				<string>5359</string>
+				<key>firstBetweenField</key>
+				<string></string>
+				<key>menuLabel</key>
+				<string>`trip_id` = '5359'</string>
+				<key>secondBetweenField</key>
+				<string></string>
+			</dict>
+			<key>contentPageNumber</key>
+			<integer>1</integer>
+			<key>contentSelection</key>
+			<data>
+			YnBsaXN0MDDUAQIDBAUGNjdYJHZlcnNpb25YJG9iamVjdHNZJGFy
+			Y2hpdmVyVCR0b3ASAAGGoK0HCBUWFxgZHSQoLDA0VSRudWxs0wkK
+			CwwQFFdOUy5rZXlzWk5TLm9iamVjdHNWJGNsYXNzow0OD4ACgAOA
+			BKMREhOABYAGgAiADFR0eXBlVHJvd3NUa2V5c18QJlNlbGVjdGlv
+			bkRldGFpbFR5cGVQcmltYXJ5S2V5ZWREZXRhaWxz0wkKCxobHKCg
+			gAfSHh8gIVokY2xhc3NuYW1lWCRjbGFzc2VzXxATTlNNdXRhYmxl
+			RGljdGlvbmFyeaMgIiNcTlNEaWN0aW9uYXJ5WE5TT2JqZWN00goL
+			JSehJoAJgAvSCykqK1lOUy5zdHJpbmeACld0cmlwX2lk0h4fLS5f
+			EA9OU011dGFibGVTdHJpbmejLS8jWE5TU3RyaW5n0h4fMTJeTlNN
+			dXRhYmxlQXJyYXmjMTMjV05TQXJyYXnSHh8iNaIiI18QD05TS2V5
+			ZWRBcmNoaXZlctE4OVRkYXRhgAEACAARABoAIwAtADIANwBFAEsA
+			UgBaAGUAbABwAHIAdAB2AHoAfAB+AIAAggCHAIwAkQC6AMEAwgDD
+			AMUAygDVAN4A9AD4AQUBDgETARUBFwEZAR4BKAEqATIBNwFJAU0B
+			VgFbAWoBbgF2AXsBfgGQAZMBmAAAAAAAAAIBAAAAAAAAADoAAAAA
+			AAAAAAAAAAAAAAGa
+			</data>
+			<key>contentSortColIsAsc</key>
+			<true/>
+			<key>contentViewport</key>
+			<string>{{0, 0}, {1077, 601}}</string>
+			<key>isToolbarVisible</key>
+			<true/>
+			<key>queries</key>
+			<string>#weight out
+select pickup3_area, count(pickup3_area) degree_out
+from trip_12
+group by pickup3_area
+order by degree_out desc
+
+#weight in
+select dropoff3_area, count(dropoff3_area) degree_in
+from trip_12
+group by dropoff3_area
+order by degree_in desc
+
+#degree out
+select pickup3_area, count(distinct(dropoff3_area)) degree_out 
+from trip_12 
+group by pickup3_area
+order by degree_out desc
+
+#degree in
+select dropoff3_area, count(distinct(pickup3_area)) degree_in 
+from trip_12 
+group by dropoff3_area
+order by degree_in desc
+
+#average km out
+select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc
+
+#average km in
+select dropoff3_area, count(dropoff3_area) trip, round(avg(km)) avg_distance_in , round(avg(amount)) avg_amount
+from trip_12 
+group by dropoff3_area
+order by avg_distance_in desc
+
+
+</string>
+			<key>table</key>
+			<string>trip_12</string>
+			<key>view</key>
+			<string>SP_VIEW_CUSTOMQUERY</string>
+			<key>windowVerticalDividerPosition</key>
+			<real>202</real>
+		</dict>
+	</dict>
+	<key>encrypted</key>
+	<false/>
+	<key>format</key>
+	<string>connection</string>
+	<key>queryFavorites</key>
+	<array/>
+	<key>queryHistory</key>
+	<array>
+		<string>#average km out
+select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>#average km out
+select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_amount desc</string>
+		<string>#average km in
+select dropoff3_area, count(dropoff3_area) trip, round(avg(km)) avg_distance_in , round(avg(amount)) avg_amount
+from trip_12 
+group by dropoff3_area
+order by avg_distance_in desc</string>
+		<string>#average km out
+select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out, avg_amount desc</string>
+		<string>#average km out
+select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out, avg_amount</string>
+		<string>#average km out
+select pickup3_area, count(pickup3_area), round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>select pickup3_area, count(pickup3_area), avg(km) avg_distance_out , avg(amount) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>#weight out
+select pickup3_area, count(pickup3_area) degree_out
+from trip_12
+group by pickup3_area
+order by degree_out desc
+
+#weight in
+select dropoff3_area, count(dropoff3_area) degree_in
+from trip_12
+group by dropoff3_area
+order by degree_in desc
+
+#degree out
+select pickup3_area, count(distinct(dropoff3_area)) degree_out 
+from trip_12 
+group by pickup3_area
+order by degree_out desc
+
+#degree in
+select dropoff3_area, count(distinct(pickup3_area)) degree_in 
+from trip_12 
+group by dropoff3_area
+order by degree_in desc
+
+#average km out
+select pickup3_area, count(pickup3_area), avg(km) avg_distance_out , avg(amount) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>select pickup3_area, count(pickup3_area), avg(km), avg(amount) avg_distance_out 
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>#average km out
+select pickup3_area, count(pickup3_area), avg(km) avg_distance_out 
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>select trip_id,pickup3_area, km
+from trip_12
+where pickup3_area='Sunda'</string>
+		<string>select pickup3_area, km
+from trip_12
+where pickup3_area='Sunda'</string>
+		<string>select pickup3_area, count(pickup3_area), avg(km) avg_distance_out 
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>select pickup3_area, avg(km) avg_distance_out 
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc</string>
+		<string>#degree out
+select pickup3_area, count(distinct(dropoff3_area)) degree_out 
+from trip_12 
+group by pickup3_area
+order by degree_out desc</string>
+		<string>#degree in
+select dropoff3_area, count(distinct(pickup3_area)) degree_in 
+from trip_12 
+group by dropoff3_area
+order by degree_in desc</string>
+		<string>#degree in
+select dropoff3_area, count(distinct(pickup3_area)) degree_in 
+from trip_12 
+group by dropoff3_area
+order by dropoff3_area desc</string>
+		<string>#degree in
+select dropoff3_area, count(distinct(pickup3_area)) degree_in 
+from trip_12 
+group by dropoff3_area</string>
+		<string>select distinct(dropoff3_area)
+from trip_12
+where pickup3_area='ABC'</string>
+		<string>select pickup3_area, count(distinct(dropoff3_area)) degree_out 
+from trip_12 
+group by pickup3_area</string>
+	</array>
+	<key>rdbms_type</key>
+	<string>mysql</string>
+	<key>rdbms_version</key>
+	<string>5.6.24</string>
+	<key>version</key>
+	<integer>1</integer>
+</dict>
+</plist>
