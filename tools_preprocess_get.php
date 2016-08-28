@@ -14,6 +14,7 @@
             $dropoff_long="dropoff".$INDEX."_long";
         }
         
+        
         function getDay(){
             $dayTrim="";
             if(isset($_GET['day']) && $_GET['day']!=''){
@@ -58,6 +59,10 @@
             }
             return $wherePeriod." ".$whereArea." ".$whereWeekday." ".$whereDay; 
         }
+        
+        $start=explode("-",$_GET['startPeriod'])[2];
+        $end=explode("-",$_GET['endPeriod'])[2];
+        $filename=$start."-".$end."_".str_replace(',', '', $_GET['weekday'])."_".getDay();
         
         switch($_GET['req']){
             case "getTrip" : 
@@ -122,12 +127,10 @@
                     ".getWherePeriod()."
                 ORDER BY $pickup_area,$dropoff_area ASC
                 ");
+                    
+                $filenameExport="Gp".$INDEX."_".$start."-".$end."_".str_replace(',', '', $_GET['weekday'])."_".getDay();
                 
-                $start=explode("-",$_GET['startPeriod'])[2];
-                $end=explode("-",$_GET['endPeriod'])[2];
-                $filename="Gp".$INDEX."_".$start."-".$end."_".str_replace(',', '', $_GET['weekday'])."_".getDay();
-                
-                $myfile = fopen("data/".$filename.".csv", "w") or die("Unable to open file!");
+                $myfile = fopen("data/".$filenameExport.".csv", "w") or die("Unable to open file!");
                 while ($data=mysql_fetch_array($result)){
                     fwrite($myfile, $data[$pickup_area].",".$data[$dropoff_area]."\n");
                 }
@@ -153,7 +156,14 @@
                 
                 $result=mysql_query($query);
                 $i=0;
-                while ($data=mysql_fetch_array($result)){ $trip[$i]=$data; $i++; }
+                
+                $myfile = fopen("data/getODRank".$filename.".csv", "w") or die("Unable to open file!");
+                fwrite($myfile, "No,Origin,Destination,Trip Count\n");
+                while ($data=mysql_fetch_array($result)){ 
+                    fwrite($myfile, ($i+1).",".$data[0].",".$data[1].",".$data[2]."\n");
+                    $trip[$i]=$data; $i++; 
+                }
+                fclose($myfile);
                 echo @json_encode($trip);
                 break; 
             break; 
@@ -174,54 +184,143 @@
                 ";
                 $result=mysql_query($query);
                 $i=0;
-                while ($data=mysql_fetch_array($result)){ $trip[$i]=$data; $i++; }
+                $myfile = fopen("data/getWeightOut".$filename.".csv", "w") or die("Unable to open file!");
+                fwrite($myfile, "No,Origin,Trip Count\n");
+                while ($data=mysql_fetch_array($result)){ 
+                    fwrite($myfile, ($i+1).",".$data[0].",".$data[1]."\n");
+                    $trip[$i]=$data; $i++; 
+                }
+                fclose($myfile);
                 echo @json_encode($trip);
-            break;                 
+            break;   
+                
+            case "getWeightIn" : 
+                $query="
+                    select $dropoff_area, count($dropoff_area) weight_in
+                    from trip_12
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                    group by $dropoff_area
+                    order by weight_in desc
+                    LIMIT 10
+                ";
+                $result=mysql_query($query);
+                $i=0;
+                //$myfile = fopen("data/getWeightIn".$filename.".csv", "w") or die("Unable to open file!");
+                while ($data=mysql_fetch_array($result)){ 
+                    //fwrite($myfile, $data[0].",".$data[1]."\n");
+                    $trip[$i]=$data; $i++; 
+                }
+                //fclose($myfile);
+                echo @json_encode($trip);
+            break;  
+                
+            case "getDegreeOut" : 
+                $query="
+                    select $pickup_area, count(distinct($dropoff_area)) degree_out 
+                    from trip_12
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                    group by $pickup_area
+                    order by degree_out desc
+                    LIMIT 10
+                ";
+                
+                $result=mysql_query($query);
+                $i=0;
+                //$myfile = fopen("data/getDegreeOut".$filename.".csv", "w") or die("Unable to open file!");
+                while ($data=mysql_fetch_array($result)){ 
+                    //fwrite($myfile, $data[0].",".$data[1]."\n");
+                    $trip[$i]=$data; $i++; 
+                }
+                //fclose($myfile);
+                echo @json_encode($trip);
+            break;  
+                
+            case "getDegreeIn" : 
+                $query="
+                    select $dropoff_area, count(distinct($pickup_area)) degree_in 
+                    from trip_12
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                    group by $dropoff_area
+                    order by degree_in desc
+                    LIMIT 10
+                ";
+                $result=mysql_query($query);
+                $i=0;
+                //$myfile = fopen("data/getDegreeIn".$filename.".csv", "w") or die("Unable to open file!");
+                while ($data=mysql_fetch_array($result)){ 
+                    //fwrite($myfile, $data[0].",".$data[1]."\n");
+                    $trip[$i]=$data; $i++; 
+                }
+                //fclose($myfile);
+                echo @json_encode($trip);
+            break;      
 
+            case "getKmOut" : 
+                $query="
+                    select $pickup_area, count($pickup_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+                    from trip_12
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                        group by $pickup_area
+                        order by avg_distance_out desc
+                    LIMIT 10
+                ";
+                $result=mysql_query($query);
+                $i=0;
+                //$myfile = fopen("data/getKmOut".$filename.".csv", "w") or die("Unable to open file!");
+                while ($data=mysql_fetch_array($result)){ 
+                    //fwrite($myfile, $data[0].",".$data[1].",".$data[2].",".$data[3]."\n");
+                    $trip[$i]=$data; $i++; 
+                }
+                //fclose($myfile);
+                echo @json_encode($trip);
+            break;  
                 
+            case "getKmIn" : 
+                $query="
+                    select $dropoff_area, count($dropoff_area) trip, round(avg(km)) avg_distance_in , round(avg(amount)) avg_amount
+                    from trip_12
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                    group by $dropoff_area
+                    order by avg_distance_in desc
+                    LIMIT 10
+                ";
+                $result=mysql_query($query);
+                $i=0;
+                //$myfile = fopen("data/getKmIn".$filename.".csv", "w") or die("Unable to open file!");
+                while ($data=mysql_fetch_array($result)){ 
+                    //fwrite($myfile, $data[0].",".$data[1].",".$data[2].",".$data[3]."\n");
+                    $trip[$i]=$data; $i++; 
+                }
+                //fclose($myfile);
+                echo @json_encode($trip);
+            break;     
                 
-                
-                
-                
-                
-                
-            //
-            //#weight out
-            //select pickup3_area, count(pickup3_area) degree_out
-            //from trip_12
-            //group by pickup3_area
-            //order by degree_out desc
-            //
-            //#weight in
-            //select dropoff3_area, count(dropoff3_area) degree_in
-            //from trip_12
-            //group by dropoff3_area
-            //order by degree_in desc
-            //
-            //#degree out
-            //select pickup3_area, count(distinct(dropoff3_area)) degree_out 
-            //from trip_12 
-            //group by pickup3_area
-            //order by degree_out desc
-            //
-            //#degree in
-            //select dropoff3_area, count(distinct(pickup3_area)) degree_in 
-            //from trip_12 
-            //group by dropoff3_area
-            //order by degree_in desc
-            //
-            //#average km out
-            //select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
-            //from trip_12 
-            //group by pickup3_area
-            //order by avg_distance_out desc
-            //
-            //#average km in
-            //select dropoff3_area, count(dropoff3_area) trip, round(avg(km)) avg_distance_in , round(avg(amount)) avg_amount
-            //from trip_12 
-            //group by dropoff3_area
-            //order by avg_distance_in desc
-            //    
+             
                 
             //=============== JAMIL =======================================================
             case "getTripForArimaData" : 

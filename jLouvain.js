@@ -61,7 +61,6 @@
 			return neighbours;
 		}
 
-
 		function get_edge_weight(graph, node1, node2) {
 			return graph._assoc_mat[node1] ? graph._assoc_mat[node1][node2] : undefined;
 		}
@@ -313,7 +312,6 @@
 			return partition;
 		}
 
-
 		function generate_dendogram(graph, part_init) {
 			if (graph.edges.length === 0) {
 				var part = {};
@@ -350,7 +348,7 @@
 				current_graph = induced_graph(partition, current_graph);
 				init_status(current_graph, status);
 			}
-            console.log("Modularity "+mod);
+            console.log("\nModularity "+mod);
 
 			return status_list;
 		}

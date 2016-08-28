@@ -100,7 +100,7 @@ function buildMap(bandungCentroid){
         id: 'laezano.18b09133',
         accessToken: 'pk.eyJ1IjoibGFlemFubyIsImEiOiIxYzMzNmJmOTdjY2M4MmI5N2U2ZWI1ZjYyZTYyZGVmNCJ9.-VDDMhYojWz8ghvMftCkcw'
     }).addTo(map);
-    console.log("Time to build map = "+(new Date() - start)+"ms");
+    console.log("Build map = "+(new Date() - start)+"ms");
 }    
 
 function drawBound(bound,color,weight,fillOpacity){
@@ -187,7 +187,7 @@ function drawGridRectangle(bounds,gridSize){
         }
         row++;
     }
-    console.log("Time to draw grid rectangle = "+(new Date() - start)+"ms");
+    console.log("Draw grid rectangle = "+(new Date() - start)+"ms");
     console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
 }
        
@@ -283,7 +283,7 @@ function calculateCentroidArea(data,originOrDestination){
     }
     
     var new_time = new Date();
-    console.log("\nCalculate area "+originOrDestination+" origin time = "+(new_time - old_time)+" ms");
+    console.log("Calculate area "+originOrDestination+" origin time = "+(new_time - old_time)+" ms");
 }     
     
 function load_draw_data(data){
@@ -339,7 +339,7 @@ function load_draw_data(data){
     //map.addLayer(odLine);
     
     var new_time = new Date();
-    console.log("\nTime to read data, draw point = "+(new_time - old_time)+" ms");
+    console.log("Read data, draw point = "+(new_time - old_time)+" ms");
     console.log("Origin point "+originPoint.length+" , Destination point : "+destinationPoint.length);
 }       
 
@@ -381,7 +381,14 @@ $(document).ready(function() {
     drawGridRectangle(bandungBounds,gridSize);
     
     //get areaname list
-    $.getJSON("tools_preprocess_get.php",{ req : "getGridArea" , index : INDEX },
+    $.getJSON("tools_preprocess_get.php",{ 
+        index : INDEX,
+        req : "getGridArea",
+        startPeriod : $("#startPeriod").val(),
+        endPeriod : $("#endPeriod").val(),
+        weekday : getCheckedWeekday,
+        day : getCheckedDay
+    },
         function(data, status){
             var old_time = new Date();
             $.each(data, function (index, value) { data[index]=value; });
@@ -400,7 +407,7 @@ $(document).ready(function() {
             dataGridArea=data; // key : index, value = object{area_name, gridId}
             
             var new_time = new Date();
-            console.log("\nTime to load grid area = "+(new_time - old_time)+" ms");
+            console.log("\nLoad Area name grid = "+(new_time - old_time)+" ms");
             
             //load data after getArea finish!
             //$("#loadData").click();
@@ -455,15 +462,34 @@ $(document).ready(function() {
                     edge_data.push({
                         source : data[i][pickup_area].replace(/ /g,''),
                         target : data[i][dropoff_area].replace(/ /g,''),
+                        //weight : Math.ceil(parseFloat(data[i]["weight"]) / getCheckedWeekday().length)
                         weight : parseFloat(data[i]["weight"])
                     });
                 } 
              
+             
+                var old_time = new Date();
                 //== Graph Clustering - jLouvain
                 var node = node_data_o.concat(node_data_d).getUnique();
                 var community = jLouvain().nodes(node).edges(edge_data);
                 var result  = community();
                 console.log(result);
+                //print modularity inside jLouvain
+                
+                //cluster count
+                var generatedCluster=0;
+                for (var areaName in result){
+                    if (typeof result[areaName] !== 'function') {
+                        if(result[areaName]>generatedCluster){ generatedCluster=result[areaName]}
+                    }
+                    
+                }
+                console.log("Generated cluster "+(generatedCluster+1));
+                console.log("Node "+node.length);
+                console.log("Edge "+edge_data.length);
+                var new_time = new Date();
+                console.log("Louvain clustering = "+(new_time - old_time)+" ms");
+             
              
                 //Display Clustering Reselut, coloring active grid & draw arrow line
                 for(var i=0;i<edge_data.length;i++){
@@ -481,7 +507,7 @@ $(document).ready(function() {
                             //active grid destination
                             var grid=areaGridId[edge_data[i].target.replace(/ /g,'')].split(",");
                             for(var j=0;j<grid.length;j++){          
-                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].target]], fillColor:markerColors[result[edge_data[i].target]], fillOpacity:0.8}).bindLabel(result[edge_data[i].source]+" "+edge_data[i].target);
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].target]], fillColor:markerColors[result[edge_data[i].target]], fillOpacity:0.8}).bindLabel(result[edge_data[i].target]+" "+edge_data[i].target);
                             }
                             
                             //Polylines with Arrow
@@ -522,9 +548,16 @@ $(document).ready(function() {
                 }
                 //map.addLayer(areaToAreaLine);
              
+        
                 //==== Print graph statistic
                 getGraphStatistic("getODRank");
                 getGraphStatistic("getWeightOut");
+                getGraphStatistic("getWeightIn");
+                getGraphStatistic("getDegreeOut");
+                getGraphStatistic("getDegreeIn");
+                getGraphStatistic("getKmOut");
+                getGraphStatistic("getKmIn");
+                
             }
         );
     }  
@@ -545,16 +578,51 @@ $(document).ready(function() {
             
                 switch (statistic) {
                     case "getODRank":
-                        console.log("\nTop 10 OD Rank ");
+                        console.log("\n==== Top 10 OD RANK ");
                         for(var i=0;i<data.length;i++){
                             console.log(data[i][0]+","+data[i][1]+","+data[i][2])
                         }
                     break;    
                         
                     case "getWeightOut":
-                        console.log("\nTop 10 Weight Out");
+                        console.log("\n==== Top 10 WEIGHT Out");
                         for(var i=0;i<data.length;i++){
                             console.log(data[i][0]+","+data[i][1])
+                        }
+                    break;
+                        
+                    case "getWeightIn":
+                        console.log("\n=== Top 10 WEIGHT In");
+                        for(var i=0;i<data.length;i++){
+                            console.log(data[i][0]+","+data[i][1])
+                        }
+                    break;   
+                        
+                    case "getDegreeOut":
+                        console.log("\n==== Top 10 DEGREE Out");
+                        for(var i=0;i<data.length;i++){
+                            console.log(data[i][0]+","+data[i][1])
+                        }
+                    break;    
+                        
+                    case "getDegreeIn":
+                        console.log("\n==== Top 10 DEGREE In");
+                        for(var i=0;i<data.length;i++){
+                            console.log(data[i][0]+","+data[i][1])
+                        }
+                    break;     
+                        
+                    case "getKmOut":
+                        console.log("\n==== Top 10 KM Out");
+                        for(var i=0;i<data.length;i++){
+                            console.log(data[i][0]+","+data[i][1]+","+data[i][2]+","+data[i][3])
+                        }
+                    break; 
+                        
+                    case "getKmIn":
+                        console.log("\n==== Top 10 KM In");
+                        for(var i=0;i<data.length;i++){
+                            console.log(data[i][0]+","+data[i][1]+","+data[i][2]+","+data[i][3])
                         }
                     break;
                         
@@ -574,7 +642,7 @@ $(document).ready(function() {
                     <tr>
                         <td>Period</td>
                         <td colspan="3">
-                            <input type="text" id="startPeriod" class="date" value="2015-12-01"> - <input type="text" id="endPeriod" class="date" value="2015-12-31">
+                            <input type="text" id="startPeriod" class="date" value="2015-12-30"> - <input type="text" id="endPeriod" class="date" value="2015-12-31">
                         </td>
                     </tr>
                     <tr>
