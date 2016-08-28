@@ -1,16 +1,18 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
     if(isset($_GET['req']) && $_GET['req']!=""){
-        $INDEX=$_GET['index'];
-        $pickup_area="pickup".$INDEX."_area";
-        $dropoff_area="dropoff".$INDEX."_area";
-        $pickup_lat="pickup".$INDEX."_lat";
-        $dropoff_lat="dropoff".$INDEX."_lat";
-        $pickup_long="pickup".$INDEX."_long";
-        $dropoff_long="dropoff".$INDEX."_long";
+        if(isset($_GET['index']) && $_GET['index']!=""){
+            $INDEX=$_GET['index'];
+            $pickup_area="pickup".$INDEX."_area";
+            $dropoff_area="dropoff".$INDEX."_area";
+            $pickup_lat="pickup".$INDEX."_lat";
+            $dropoff_lat="dropoff".$INDEX."_lat";
+            $pickup_long="pickup".$INDEX."_long";
+            $dropoff_long="dropoff".$INDEX."_long";
+        }
         
         function getDay(){
             $dayTrim="";
@@ -73,9 +75,7 @@
                 //echo $query;
                 $result=mysql_query($query);
                 $i=0;
-                while ($data=mysql_fetch_array($result)){
-                    $trip[$i]=$data; $i++;
-                }
+                while ($data=mysql_fetch_array($result)){ $trip[$i]=$data; $i++; }
                 echo @json_encode($trip);
                 break;
                 
@@ -94,11 +94,10 @@
                 ";
                 $result=mysql_query($query);
                 $i=0;
-                while ($data=mysql_fetch_array($result)){
-                    $trip[$i]=$data; $i++;
-                }
+                while ($data=mysql_fetch_array($result)){ $trip[$i]=$data; $i++; }
                 echo @json_encode($trip);
                 break; 
+                
             case "getGridArea" :
                 mysql_query("SET SESSION group_concat_max_len = 1000000");
                 $result=mysql_query("
@@ -109,10 +108,7 @@
                     ORDER BY area_name ASC
                 ");
                 $i=0;
-                while ($data=mysql_fetch_array($result)){
-                    $trip[$i]=$data;
-                    $i++;
-                }
+                while ($data=mysql_fetch_array($result)){ $trip[$i]=$data; $i++; }
                 echo @json_encode($trip);
                 break;
             
@@ -138,8 +134,96 @@
                 fclose($myfile);
                 echo @json_encode($filename);
                 break;
-                   
-            //=============== JAMIL
+            
+            //Graph statistic   
+            case "getODRank" : 
+                $query="
+                    select $pickup_area, $dropoff_area, count(*) weight 
+                    from trip_12 
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                    group by $pickup_area, $dropoff_area
+                    ORDER BY weight DESC,$pickup_area, $dropoff_area
+                    LIMIT 10
+                ";
+                
+                $result=mysql_query($query);
+                $i=0;
+                while ($data=mysql_fetch_array($result)){ $trip[$i]=$data; $i++; }
+                echo @json_encode($trip);
+                break; 
+            break; 
+                
+            case "getWeightOut" : 
+                $query="
+                    select $pickup_area, count($pickup_area) weight_out
+                    from trip_12
+                    WHERE 
+                        $pickup_lat is not null and $pickup_long!='' and
+                        $pickup_long is not null and $pickup_long!='' and
+                        $dropoff_lat is not null and $dropoff_lat!='' and
+                        $dropoff_long is not null and $dropoff_long!=''
+                        ".getWherePeriod()." 
+                    group by $pickup_area
+                    order by weight_out desc
+                    LIMIT 10
+                ";
+                $result=mysql_query($query);
+                $i=0;
+                while ($data=mysql_fetch_array($result)){ $trip[$i]=$data; $i++; }
+                echo @json_encode($trip);
+            break;                 
+
+                
+                
+                
+                
+                
+                
+                
+            //
+            //#weight out
+            //select pickup3_area, count(pickup3_area) degree_out
+            //from trip_12
+            //group by pickup3_area
+            //order by degree_out desc
+            //
+            //#weight in
+            //select dropoff3_area, count(dropoff3_area) degree_in
+            //from trip_12
+            //group by dropoff3_area
+            //order by degree_in desc
+            //
+            //#degree out
+            //select pickup3_area, count(distinct(dropoff3_area)) degree_out 
+            //from trip_12 
+            //group by pickup3_area
+            //order by degree_out desc
+            //
+            //#degree in
+            //select dropoff3_area, count(distinct(pickup3_area)) degree_in 
+            //from trip_12 
+            //group by dropoff3_area
+            //order by degree_in desc
+            //
+            //#average km out
+            //select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+            //from trip_12 
+            //group by pickup3_area
+            //order by avg_distance_out desc
+            //
+            //#average km in
+            //select dropoff3_area, count(dropoff3_area) trip, round(avg(km)) avg_distance_in , round(avg(amount)) avg_amount
+            //from trip_12 
+            //group by dropoff3_area
+            //order by avg_distance_in desc
+            //    
+                
+            //=============== JAMIL =======================================================
             case "getTripForArimaData" : 
                 $timePeriod=explode("-",$_GET['timePeriod']);
                 $wherePeriod=(isset($_GET['datePeriod']) && isset($_GET['timePeriod']))? 
@@ -165,7 +249,7 @@
                 $result=mysql_query("
                     SELECT grid,count 
                     FROM arimaData 
-                    where period='2015-12-08 12:00-2015-12-08 15:00' 
+                    where period='2015-12-07 12:00-2015-12-07 15:00' 
                     ORDER BY grid,period ASC
                 ");
                 $i=0;
@@ -179,5 +263,4 @@
             default : break;
         }
     }
-    
 ?>

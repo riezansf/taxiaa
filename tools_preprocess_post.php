@@ -1,20 +1,21 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
-
     if(isset($_POST['req']) && $_POST['req']!=""){
-        
-        $pickup_area="pickup".$_POST['index']."_area";
-        $dropoff_area="dropoff".$_POST['index']."_area";
-        $pickup_lat="pickup".$_POST['index']."_lat";
-        $dropoff_lat="dropoff".$_POST['index']."_lat";
-        $pickup_long="pickup".$_POST['index']."_long";
-        $dropoff_long="dropoff".$_POST['index']."_long";
-        
-        $pickup_grid100="pickup".$_POST['index']."_grid100";
-        $dropoff_grid100="dropoff".$_POST['index']."_grid100";
+        if(isset($_GET['index']) && $_GET['index']!=""){
+            $INDEX=$_GET['index'];
+            $pickup_area="pickup".$INDEX."_area";
+            $dropoff_area="dropoff".$INDEX."_area";
+            $pickup_lat="pickup".$INDEX."_lat";
+            $dropoff_lat="dropoff".$INDEX."_lat";
+            $pickup_long="pickup".$INDEX."_long";
+            $dropoff_long="dropoff".$INDEX."_long";
+
+            $pickup_grid100="pickup".$INDEX."_grid100";
+            $dropoff_grid100="dropoff".$INDEX."_grid100";
+        }
         
         switch($_POST['req']){       
             case "updateTrip":

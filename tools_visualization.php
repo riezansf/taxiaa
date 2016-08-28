@@ -85,7 +85,7 @@ var edge_data = [];
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
 
-var styleGrid={weight:1, color:'grey',fillColor:'grey',fillOpacity:0.01};
+var styleGrid={weight:0.5, color:'grey',fillColor:'grey',fillOpacity:0.01};
 var styleSelectedGrid={weight:0.5, color:'red', fillColor:'red', fillOpacity:0.8};
 function getStyleGrid(color){ return { weight:0.5, color:color, fillColor:color, fillOpacity:0.3};}    
     
@@ -251,14 +251,14 @@ function calculateCentroidArea(data,originOrDestination){
                 finalLatDegrees = finalLatRadians * 180 / Math.PI;
                 finalLonDegrees = lonDegreesTotal / data[areaName].length;
             
-                circle=L.circle([finalLatDegrees,finalLonDegrees], 10, { fillOpacity: 1}).bindLabel(areaName);
+                circle=L.circle([finalLatDegrees,finalLonDegrees], 10, { fillOpacity: 1});
                 
                 if(originOrDestination=="origin"){
                     areaCentroidO[areaName.replace(/ /g,'')]=finalLatDegrees.toString()+","+finalLonDegrees.toString();
-                    areaCentroidOMarkers.addLayer(circle.setStyle({color: "blue", fillColor: "red"}));
+                    areaCentroidOMarkers.addLayer(circle.setStyle({color: "blue", fillColor: "red"}).bindLabel(data[areaName].length+" trip from "+areaName));
                 }else{
                     areaCentroidD[areaName.replace(/ /g,'')]=finalLatDegrees.toString()+","+finalLonDegrees.toString();
-                    areaCentroidDMarkers.addLayer(circle.setStyle({color: "green", fillColor: "red"}));
+                    areaCentroidDMarkers.addLayer(circle.setStyle({color: "green", fillColor: "red"}).bindLabel(data[areaName].length+" trip to "+areaName));
                 }
                 
             }else{
@@ -267,10 +267,10 @@ function calculateCentroidArea(data,originOrDestination){
                 
                 if(originOrDestination=="origin"){
                     areaCentroidO[areaName.replace(/ /g,'')]=latLong[0]+","+latLong[1];
-                    areaCentroidOMarkers.addLayer(circle.setStyle({color: "blue", fillColor: "red"}));
+                    areaCentroidOMarkers.addLayer(circle.setStyle({color: "blue", fillColor: "red"}).bindLabel("1 trip from "+areaName));
                 }else{
                     areaCentroidD[areaName.replace(/ /g,'')]=latLong[0]+","+latLong[1];
-                    areaCentroidDMarkers.addLayer(circle.setStyle({color: "green", fillColor: "red"}));
+                    areaCentroidDMarkers.addLayer(circle.setStyle({color: "green", fillColor: "red"}).bindLabel("1 trip to "+areaName));
                 }
             }            
         }
@@ -356,12 +356,26 @@ function getCheckedDay(){
     
 $(document).ready(function() { 
     $(".date").datepicker({ dateFormat: 'yy-mm-dd', minDate : '2015-12-1', maxDate : '2015-12-31'});
-    $( "#slider-range" ).slider({ range: true, min: 0, max: 24, values: [ 12, 18 ],
+    $( "#slider-range" ).slider({ min: 0, max: 10, values: [ 1 ],
       slide: function( event, ui ) {
-        $( "#amount" ).val( ui.values[ 0 ] + " - " + ui.values[ 1 ] );
+        $( "#filterWeight" ).val( ui.values[0] );
       }
     }); 
    
+        //=========================== TODO
+        //create grid luarbandung
+        //area luar bandung labeling
+
+        //toggle show hide grid
+        //toggle show hide O, D, line, Marker
+        //toggle show hide Centroid O, Centroid D
+
+        //remove inactive o-d point after weight filtering >1
+        //circle size : Origin degree out , Destination degree in
+        //line = edge weight 
+
+        //add filter show/hide only 1 cluster to show
+        //add filter edge weight
     
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
@@ -404,7 +418,6 @@ $(document).ready(function() {
             },
             function(data, status){
                 //$("#loadData").attr("value","Data loaded!");
-               
                 $.each(data, function (index, value) { data[index]=value; });
         
                 load_draw_data(data);     
@@ -437,6 +450,7 @@ $(document).ready(function() {
             function(data, status){
                 $.each(data, function (index, value) { data[index]=value; });
                 
+                //genereate edge data
                 for(var i=0;i<data.length;i++){
                     edge_data.push({
                         source : data[i][pickup_area].replace(/ /g,''),
@@ -445,45 +459,29 @@ $(document).ready(function() {
                     });
                 } 
              
-                //jLouvain
+                //== Graph Clustering - jLouvain
                 var node = node_data_o.concat(node_data_d).getUnique();
                 var community = jLouvain().nodes(node).edges(edge_data);
                 var result  = community();
                 console.log(result);
              
+                //Display Clustering Reselut, coloring active grid & draw arrow line
                 for(var i=0;i<edge_data.length;i++){
-                
-                    //=========================== TODO
-                    //create grid luarbandung
-                    //area luar bandung labeling
-                    
-                    //toggle show hide grid
-                    //toggle show hide O, D, line, Marker
-                    //toggle show hide Centroid O, Centroid D
-                    
-                    //remove inactive o-d point after weight filtering >1
-                    //circle size : Origin degree out , Destination degree in
-                    //line = edge weight 
-                    
-                    //add filter show/hide only 1 cluster to show
-                    //add filter edge weight
-                    
-    
                    if(edge_data[i].source!=edge_data[i].target && edge_data[i].weight>1){
                         //coloring active grid, with cluster color
                         if(typeof areaGridId[edge_data[i].source]!="undefined" && typeof areaGridId[edge_data[i].target]!="undefined"){                
-                            console.log(edge_data[i].source+"["+result[edge_data[i].source]+"] > "+edge_data[i].target+"["+result[edge_data[i].target]+"] "+edge_data[i].weight);
+                            //console.log(edge_data[i].source+"("+result[edge_data[i].source]+"),"+edge_data[i].target+"("+result[edge_data[i].target]+"),"+edge_data[i].weight);
                             
                             //active grid origin
                             var grid=areaGridId[edge_data[i].source.replace(/ /g,'')].split(",");
                             for(var j=0;j<grid.length;j++){          
-                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].source]], fillColor:markerColors[result[edge_data[i].source]], fillOpacity:0.8}).bindLabel(edge_data[i].source);
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].source]], fillColor:markerColors[result[edge_data[i].source]], fillOpacity:0.8}).bindLabel(result[edge_data[i].source]+" "+edge_data[i].source);
                             } 
                             
                             //active grid destination
                             var grid=areaGridId[edge_data[i].target.replace(/ /g,'')].split(",");
                             for(var j=0;j<grid.length;j++){          
-                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].target]], fillColor:markerColors[result[edge_data[i].target]], fillOpacity:0.8}).bindLabel(edge_data[i].target);
+                                gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].target]], fillColor:markerColors[result[edge_data[i].target]], fillOpacity:0.8}).bindLabel(result[edge_data[i].source]+" "+edge_data[i].target);
                             }
                             
                             //Polylines with Arrow
@@ -523,9 +521,48 @@ $(document).ready(function() {
                    }
                 }
                 //map.addLayer(areaToAreaLine);
+             
+                //==== Print graph statistic
+                getGraphStatistic("getODRank");
+                getGraphStatistic("getWeightOut");
             }
         );
-    }    
+    }  
+    
+    
+    function getGraphStatistic(statistic){
+        $.getJSON("tools_preprocess_get.php",{
+                index : INDEX,
+                req : statistic,
+                startPeriod : $("#startPeriod").val(),
+                endPeriod : $("#endPeriod").val(),
+                weekday : getCheckedWeekday,
+                day : getCheckedDay
+            },
+            function(data, status){
+                $.each(data, function (index, value) { data[index]=value; });
+                //console.log(data);
+            
+                switch (statistic) {
+                    case "getODRank":
+                        console.log("\nTop 10 OD Rank ");
+                        for(var i=0;i<data.length;i++){
+                            console.log(data[i][0]+","+data[i][1]+","+data[i][2])
+                        }
+                    break;    
+                        
+                    case "getWeightOut":
+                        console.log("\nTop 10 Weight Out");
+                        for(var i=0;i<data.length;i++){
+                            console.log(data[i][0]+","+data[i][1])
+                        }
+                    break;
+                        
+                    default : break;
+                }
+            }
+        );  
+    }
 });
 </script> 
 </head>
@@ -537,7 +574,7 @@ $(document).ready(function() {
                     <tr>
                         <td>Period</td>
                         <td colspan="3">
-                            <input type="text" id="startPeriod" class="date" value="2015-12-30"> - <input type="text" id="endPeriod" class="date" value="2015-12-31">
+                            <input type="text" id="startPeriod" class="date" value="2015-12-01"> - <input type="text" id="endPeriod" class="date" value="2015-12-31">
                         </td>
                     </tr>
                     <tr>
@@ -589,12 +626,17 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <td colspan="2" id="filterCluster">
-                            Show/Hide Cluster
+                            Show/Hide Cluster<br>
+                            <input type="checkbox" name="cluster" value="" checked="true"> | Cluster 1 | Area,Area,Area<br><br><br>
                         </td>
                     </tr>
                     <tr>
                         <td colspan="2" id="filterTrip">
-                            Filter Trip Count
+                            Filter Trip Count<br>
+                            
+                            <input type="text" id="filterWeight" value="1" readonly style="border:0; font-weight:bold;width:50px;">
+                            <div id="slider-range" ></div>
+
                         </td>
                 </table>
             </div>

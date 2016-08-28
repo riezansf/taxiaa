@@ -186,7 +186,7 @@
 					result = result + in_degree / links - Math.pow((degree / (2.0 * links)), 2);
 				}
 			});
-
+           
 			return result;
 		}
 
@@ -275,7 +275,7 @@
 						modif = true;
 					}
 				});
-				new_mod = __modularity(status);
+				new_mod = __modularity(status); 
 				if (new_mod - cur_mod < __MIN) {
 					break;
 				}
@@ -337,8 +337,9 @@
 
 			while (true) {
 				__one_level(current_graph, status);
-				new_mod = __modularity(status);
+				new_mod = __modularity(status); 
 				if (new_mod - mod < __MIN) {
+                    
 					break;
 				}
 
@@ -349,6 +350,7 @@
 				current_graph = induced_graph(partition, current_graph);
 				init_status(current_graph, status);
 			}
+            console.log("Modularity "+mod);
 
 			return status_list;
 		}
