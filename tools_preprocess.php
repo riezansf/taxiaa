@@ -404,6 +404,10 @@ $(document).ready(function() {
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
     //drawGridRectangleLb(bandungBoundsCimahi,gridSize);
+
+    //todo include in map point to grid, check if luar bandung then do this : 
+    L.rectangle(bandungBoundsCimahi, {weight:0.5, color:'red',fillColor:'red',fillOpacity:0.1}).bindLabel("").addTo(map);
+    
     
     //get areaname list
     $.getJSON("tools_preprocess_get.php",{ req : "getGridArea" , index : INDEX },

@@ -168,7 +168,7 @@ function drawGridRectangle(bounds,gridSize){
         col=1;
         while(k<bounds[1][1]){
             bound=[[j, k] , [(j-gridSize).toFixed(12),(k+gridSize).toFixed(12)]];
-            rectangle = L.rectangle(bound, styleGrid).bindLabel(gridCount+" "+row+","+col).addTo(map);
+            rectangle = L.rectangle(bound, styleGrid).bindLabel(gridCount+" "+row+","+col);
          
             gridId[gridCount]={
                 row: row,
@@ -190,12 +190,13 @@ function drawGridRectangle(bounds,gridSize){
         }
         row++;
     }
+    
+    map.addLayer(gridRectangle);
+    
     console.log("Draw grid rectangle = "+(new Date() - start)+"ms");
     console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
 }
        
-   
-    
 function getGridId(lat,long){
     for(var j=1;j<gridId.length;j++){
         if(lat>gridId[j].topLeft[0] && lat<gridId[j].rightBottom[0] && long<gridId[j].rightBottom[1]){
