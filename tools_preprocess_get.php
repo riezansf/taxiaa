@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -59,9 +59,12 @@
             return $wherePeriod." ".$whereArea." ".$whereWeekday." ".$whereDay; 
         }
         
-        $start=explode("-",$_GET['startPeriod'])[2];
-        $end=explode("-",$_GET['endPeriod'])[2];
-        $filename=$start."-".$end."_".str_replace(',', '', $_GET['weekday'])."_".getDay();
+        if(isset($_GET['startPeriod']) && isset($_GET['endPeriod'])){
+            $start=explode("-",$_GET['startPeriod'])[2];
+            $end=explode("-",$_GET['endPeriod'])[2];
+            $filename=$start."-".$end."_".str_replace(',', '', $_GET['weekday'])."_".getDay();  
+        }
+       
         
         switch($_GET['req']){
             case "getTrip" : 

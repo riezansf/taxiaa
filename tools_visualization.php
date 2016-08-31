@@ -75,7 +75,8 @@ var areaCentroidDMarkers=new L.FeatureGroup(); // key = area_name, value = circl
     
 var grid=[]; //key = row & col, value = grid object
 var gridId=[]; // key = gridId, value = grid object
-
+var gridRectangle=new L.FeatureGroup();
+    
 //graph
 var node_data_o = []; // any type of string can be used as id
 var node_data_d = [];
@@ -180,6 +181,8 @@ function drawGridRectangle(bounds,gridSize){
                 centroidOrigin : [],
                 centroidDestination : []
             };
+            
+            gridRectangle.addLayer(rectangle);
                         
             k=(k+gridSize);
             gridCount++;
@@ -191,6 +194,8 @@ function drawGridRectangle(bounds,gridSize){
     console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
 }
        
+   
+    
 function getGridId(lat,long){
     for(var j=1;j<gridId.length;j++){
         if(lat>gridId[j].topLeft[0] && lat<gridId[j].rightBottom[0] && long<gridId[j].rightBottom[1]){
@@ -367,8 +372,6 @@ $(document).ready(function() {
         //area luar bandung labeling
 
         //toggle show hide grid
-        //toggle show hide O, D, line, Marker
-        //toggle show hide Centroid O, Centroid D
 
         //remove inactive o-d point after weight filtering >1
         //circle size : Origin degree out , Destination degree in
@@ -379,6 +382,7 @@ $(document).ready(function() {
     
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
+    //drawGridRectangleLb(bandungBoundsCimahi,gridSize);
     
     //get areaname list
     $.getJSON("tools_preprocess_get.php",{ 
@@ -441,12 +445,14 @@ $(document).ready(function() {
                 $("#fOdLine").change(function(){
                     if(this.checked) { map.addLayer(odLine); }else{ map.removeLayer(odLine); }
                 });
-            
                 $("#fAreaCentroidO").change(function(){
-                    if(this.checked) { map.addLayer(areaCentroidO); }else{ map.removeLayer(areaCentroidO); }
+                    if(this.checked) { map.addLayer(areaCentroidOMarkers); }else{ map.removeLayer(areaCentroidOMarkers); }
                 });  
                 $("#fAreaCentroidD").change(function(){
-                    if(this.checked) { map.addLayer(areaCentroidO); }else{ map.removeLayer(areaCentroidO); }
+                    if(this.checked) { map.addLayer(areaCentroidDMarkers); }else{ map.removeLayer(areaCentroidDMarkers); }
+                });  
+                $("#fGridRectangle").change(function(){
+                    if(this.checked) { map.addLayer(gridRectangle); }else{ map.removeLayer(gridRectangle); }
                 });  
             }
         );  
@@ -474,8 +480,8 @@ $(document).ready(function() {
                     });
                 } 
              
-                var old_time = new Date();
                 //== Graph Clustering - jLouvain
+                var old_time = new Date();
                 var node = node_data_o.concat(node_data_d).getUnique();
                 var community = jLouvain().nodes(node).edges(edge_data);
                 var result  = community();
@@ -726,6 +732,7 @@ $(document).ready(function() {
                     <input type="checkbox" id="fOdLine" value="fOdLine" > Line <br>
                     <input type="checkbox" id="fAreaCentroidO" value="" checked> Area Centroid Origin<br>
                     <input type="checkbox" id="fAreaCentroidD" value="" checked> Area Centroid Destination<br>
+                    <input type="checkbox" id="fGridRectangle" value="" checked> Grid <br>
                 </div>
                 
             

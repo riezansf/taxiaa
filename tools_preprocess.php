@@ -38,7 +38,8 @@ var bandungCentroid=[-6.918744, 107.669810];
 //var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
-
+var bandungBoundsCimahi=[[-6.839, 107.498], [-6.967,107.547]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
+    
 // Variable for map
 var gridSize=0.001; //aprox 109,5m
 var INDEX=3;
@@ -169,7 +170,47 @@ function drawGridRectangle(bounds,gridSize){
     console.log("Time to draw grid rectangle = "+(new Date() - start)+"ms");
     console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
 }
-       
+
+function drawGridRectangleLb(bounds,gridSize){
+    var start = new Date();
+    var gridCount=1;
+    var row=1; var col=1;
+    var rectangle;
+    var k; var bound;
+    
+    for(var j=bounds[0][0];j>=bounds[1][0];j=(j-gridSize).toFixed(12)){
+        if(grid[row]==null){grid[row]=[]}
+        
+        k=bounds[0][1]; 
+        col=1;
+        while(k<bounds[1][1]){
+            bound=[[j, k] , [(j-gridSize).toFixed(12),(k+gridSize).toFixed(12)]];
+            rectangle = L.rectangle(bound, {weight:0.5, color:'red',fillColor:'red',fillOpacity:0.01}).bindLabel(gridCount+" "+row+","+col).addTo(map);
+         
+//            gridId[gridCount]={
+//                row: row,
+//                col: col,
+//                rectangle : rectangle,
+//                topLeft : [j,k],
+//                rightBottom : [(j-gridSize).toFixed(12), (k+gridSize).toFixed(12)],
+//                origin : [],
+//                destination : [],
+//                centroidOrigin : [],
+//                centroidDestination : []
+//            };
+//            
+//            gridRectangle.addLayer(rectangle);
+                        
+            k=(k+gridSize);
+            gridCount++;
+            col++;
+        }
+        row++;
+    }
+    console.log("Draw grid rectangle = "+(new Date() - start)+"ms");
+    console.log("Grid size = "+row+"x"+col+" , Total grid : "+gridCount); 
+}     
+    
 function getGridId(lat,long){
     for(var j=1;j<gridId.length;j++){
         if(lat>gridId[j].topLeft[0] && lat<gridId[j].rightBottom[0] && long<gridId[j].rightBottom[1]){
@@ -362,6 +403,7 @@ $(document).ready(function() {
             
     buildMap(bandungCentroid);
     drawGridRectangle(bandungBounds,gridSize);
+    //drawGridRectangleLb(bandungBoundsCimahi,gridSize);
     
     //get areaname list
     $.getJSON("tools_preprocess_get.php",{ req : "getGridArea" , index : INDEX },
