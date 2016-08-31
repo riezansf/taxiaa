@@ -173,24 +173,109 @@ CASE
 	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
 	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
 	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+END AS jam, count(*) jumlah
+FROM trip_12
+GROUP BY tanggal, jam
+ORDER BY tanggal,pickup</string>
+		<string>select day(trip_date) tanggal,
+CASE 
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
 	
-END AS jam, count(*)
+	
+END AS jam, count(*) jumlah
 FROM trip_12
 GROUP BY tanggal, jam
 ORDER BY tanggal</string>
 		<string>select day(trip_date) tanggal,
 CASE 
-	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	
 	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
 	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
 	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
 	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	
+END AS jam, count(*) jumlah
+FROM trip_12
+GROUP BY tanggal, jam
+ORDER BY tanggal</string>
+		<string>select day(trip_date) tanggal,
+CASE 
+	
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
 	
 END AS jam, count(*)
 FROM trip_12
-GROUP BY tanggal, jam;
+GROUP BY tanggal, jam
+ORDER BY tanggal</string>
+		<string>#4 Trip heatmap
+select day(trip_date) tanggal,
+CASE 
+	
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	
+END AS jam, count(*)
+FROM trip_12
+WHERE jam,count(*) is not null
+GROUP BY tanggal, jam
 ORDER BY tanggal</string>
 		<string>select day(trip_date) tanggal,
+CASE 
+	
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	
+END AS jam, count(*)
+FROM trip_12
+WHERE jam is not null
+GROUP BY tanggal, jam
+ORDER BY tanggal</string>
+		<string>#4 Trip heatmap
+select day(trip_date) tanggal,
+CASE 
+	
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	
+END AS jam, count(*)
+FROM trip_12
+WHERE jam is not null
+GROUP BY tanggal, jam
+ORDER BY tanggal</string>
+		<string>#4 Trip heatmap
+select day(trip_date) tanggal,
+CASE 
+	
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	
+END AS jam, count(*)
+FROM trip_12
+GROUP BY tanggal, jam
+ORDER BY tanggal</string>
+		<string>#4 Trip heatmap
+select day(trip_date) tanggal,
 CASE 
 	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
 	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
@@ -200,16 +285,22 @@ CASE
 	
 END AS jam, count(*)
 FROM trip_12
-GROUP BY tanggal, jam</string>
-		<string>select day(trip_date) tanggal,
-CASE WHEN pickup&lt;'12:00:00' THEN 'Pagi'
-WHEN pickup&gt;'12:00:00' and pickup&lt;'17:00:00' THEN 'Siang'
-WHEN pickup&gt;'17:00:00' THEN 'Malam'
-ELSE 'null'
-END AS jam,
-count(*)
-FROM trip_12
-GROUP BY tanggal, jam</string>
+GROUP BY tanggal, jam
+ORDER BY tanggal</string>
+		<string>#3 O-D Rank by day, mon
+select pickup3_area, dropoff3_area, count(*) weight 
+from trip_12 
+WHERE WEEKDAY(trip_date)=6 and pickup3_area is not null and dropoff3_area is not null
+group by pickup3_area, dropoff3_area
+ORDER BY weight desc, pickup3_area, dropoff3_area
+LIMIT 10</string>
+		<string>#3 O-D Rank by day, mon
+select pickup3_area, dropoff3_area, count(*) weight 
+from trip_12 
+WHERE WEEKDAY(trip_date)=5 and pickup3_area is not null and dropoff3_area is not null
+group by pickup3_area, dropoff3_area
+ORDER BY weight desc, pickup3_area, dropoff3_area
+LIMIT 10</string>
 		<string>#3 O-D Rank by day, mon
 select pickup3_area, dropoff3_area, count(*) weight 
 from trip_12 
@@ -220,11 +311,19 @@ LIMIT 10</string>
 		<string>#3 O-D Rank by day, mon
 select pickup3_area, dropoff3_area, count(*) weight 
 from trip_12 
+WHERE WEEKDAY(trip_date)=3 and pickup3_area is not null and dropoff3_area is not null
+group by pickup3_area, dropoff3_area
+ORDER BY weight desc, pickup3_area, dropoff3_area
+LIMIT 10</string>
+		<string>#3 O-D Rank by day, mon
+select pickup3_area, dropoff3_area, count(*) weight 
+from trip_12 
 WHERE WEEKDAY(trip_date)=2 and pickup3_area is not null and dropoff3_area is not null
 group by pickup3_area, dropoff3_area
 ORDER BY weight desc, pickup3_area, dropoff3_area
 LIMIT 10</string>
-		<string>select pickup3_area, dropoff3_area, count(*) weight 
+		<string>#3 O-D Rank by day, mon
+select pickup3_area, dropoff3_area, count(*) weight 
 from trip_12 
 WHERE WEEKDAY(trip_date)=1 and pickup3_area is not null and dropoff3_area is not null
 group by pickup3_area, dropoff3_area
@@ -233,64 +332,17 @@ LIMIT 10</string>
 		<string>#3 O-D Rank by day, mon
 select pickup3_area, dropoff3_area, count(*) weight 
 from trip_12 
-WHERE WEEKDAY(trip_date)=0 and pickup3_area is not null and dropoff3_area is not null
+WHERE WEEKDAY(trip_date)=10 and pickup3_area is not null and dropoff3_area is not null
 group by pickup3_area, dropoff3_area
 ORDER BY weight desc, pickup3_area, dropoff3_area
 LIMIT 10</string>
-		<string>select pickup3_area, dropoff3_area, count(*) weight 
-from trip_12 
-WHERE WEEKDAY(trip_date)=0 and pickup3_area is not null and dropoff3_area is not null
-group by pickup3_area, dropoff3_area
-ORDER BY weight desc, pickup3_area null last, dropoff3_area
-LIMIT 10</string>
-		<string>select pickup3_area, dropoff3_area, count(*) weight 
-from trip_12 
-WHERE WEEKDAY(trip_date)=0 #and pickup3_area!=null and dropoff3_area!=null
-group by pickup3_area, dropoff3_area
-ORDER BY weight desc, pickup3_area, dropoff3_area
-LIMIT 10</string>
-		<string>select pickup3_area, dropoff3_area, count(*) weight 
-from trip_12 
-WHERE WEEKDAY(trip_date)=0 and pickup3_area!=null and dropoff3_area!=null
-group by pickup3_area, dropoff3_area
-ORDER BY weight desc, pickup3_area, dropoff3_area
-LIMIT 10</string>
-		<string>select pickup3_area, dropoff3_area, count(*) weight 
-from trip_12 
-WHERE WEEKDAY(trip_date)=0 and pickup3_area!=null and dropoff_3_area!=null
-group by pickup3_area, dropoff3_area
-ORDER BY weight desc, pickup3_area, dropoff3_area
-LIMIT 10</string>
-		<string>#3 O-D Rank by day, mon
-select pickup3_area, dropoff3_area, count(*) weight 
-from trip_12 
-WHERE WEEKDAY(trip_date)=0 and pickup3_area!=null and dropoff_3_area!=null
-group by pickup3_area, dropoff3_area
-ORDER BY weight desc, pickup3_area, dropoff3_area
-LIMIT 10</string>
-		<string>#3 O-D Rank by day, mon
-select pickup3_area, dropoff3_area, count(*) weight 
-from trip_12 
-WHERE WEEKDAY(trip_date)=0
-group by pickup3_area, dropoff3_area
-ORDER BY weight desc, pickup3_area, dropoff3_area</string>
-		<string>#2 count trip day of week based, mon tue wed thr fri sat sun
-select 
-(select count(*) from trip_12 where WEEKDAY(trip_date)=0) senin,
-(select count(*) from trip_12 where WEEKDAY(trip_date)=1) selasa,
-(select count(*) from trip_12 where WEEKDAY(trip_date)=2) rabu,
-(select count(*) from trip_12 where WEEKDAY(trip_date)=3) kamis,
-(select count(*) from trip_12 where WEEKDAY(trip_date)=4) jumat,
-(select count(*) from trip_12 where WEEKDAY(trip_date)=5) sabtu,
-(select count(*) from trip_12 where WEEKDAY(trip_date)=6) minggu
-from trip_12 
-group by senin,selasa,rabu,kamis,jumat,sabtu,minggu</string>
 		<string>#1 Trend count trip from 1 to 31 dec
 select trip_date, count(*) count 
 from trip_12 
 group by trip_date
-ORDER BY trip_date</string>
-		<string>#count trip day of week based, mon tue wed thr fri sat sun
+ORDER BY trip_date
+
+#2 count trip day of week based, mon tue wed thr fri sat sun
 select 
 (select count(*) from trip_12 where WEEKDAY(trip_date)=0) senin,
 (select count(*) from trip_12 where WEEKDAY(trip_date)=1) selasa,
@@ -300,22 +352,90 @@ select
 (select count(*) from trip_12 where WEEKDAY(trip_date)=5) sabtu,
 (select count(*) from trip_12 where WEEKDAY(trip_date)=6) minggu
 from trip_12 
-group by senin,selasa,rabu,kamis,jumat,sabtu,minggu</string>
-		<string>select trip_date, count(*) count 
+group by senin,selasa,rabu,kamis,jumat,sabtu,minggu 
+             
+#3 O-D Rank by day, mon
+select pickup3_area, dropoff3_area, count(*) weight 
 from trip_12 
-#WHERE WEEKDAY(trip_date)=0
-group by trip_date
-ORDER BY trip_date</string>
+WHERE WEEKDAY(trip_date)=1 and pickup3_area is not null and dropoff3_area is not null
+group by pickup3_area, dropoff3_area
+ORDER BY weight desc, pickup3_area, dropoff3_area
+LIMIT 10
+
+#4 Trip heatmap
+select day(trip_date) tanggal,
+CASE 
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	
+END AS jam, count(*)
+FROM trip_12
+GROUP BY tanggal, jam
+ORDER BY tanggal
+
+#weight out
+select pickup3_area, count(pickup3_area) degree_out
+from trip_12
+group by pickup3_area
+order by degree_out desc
+
+#weight in
+select dropoff3_area, count(dropoff3_area) degree_in
+from trip_12
+group by dropoff3_area
+order by degree_in desc
+
+#degree out
+select pickup3_area, count(distinct(dropoff3_area)) degree_out 
+from trip_12 
+group by pickup3_area
+order by degree_out desc
+
+#degree in
+select dropoff3_area, count(distinct(pickup3_area)) degree_in 
+from trip_12 
+group by dropoff3_area
+order by degree_in desc
+
+#average km out
+select pickup3_area, count(pickup3_area) trip, round(avg(km)) avg_distance_out , round(avg(amount)) avg_amount
+from trip_12 
+group by pickup3_area
+order by avg_distance_out desc
+
+#average km in
+select dropoff3_area, count(dropoff3_area) trip, round(avg(km)) avg_distance_in , round(avg(amount)) avg_amount
+from trip_12 
+group by dropoff3_area
+order by avg_distance_in desc</string>
+		<string>#3 O-D Rank by day, mon
+select pickup3_area, dropoff3_area, count(*) weight 
+from trip_12 
+WHERE WEEKDAY(trip_date)=0 and pickup3_area is not null and dropoff3_area is not null
+group by pickup3_area, dropoff3_area
+ORDER BY weight desc, pickup3_area, dropoff3_area
+LIMIT 10</string>
 		<string>select pickup3_area, dropoff3_area, count(*) weight 
 from trip_12 
-WHERE WEEKDAY(trip_date)=0
+WHERE WEEKDAY(trip_date)=3 and pickup3_area is not null and dropoff3_area is not null
 group by pickup3_area, dropoff3_area
-ORDER BY weight desc, pickup3_area, dropoff3_area</string>
-		<string>select pickup3_area, dropoff3_area, count(*) weight 
-from trip_12 
-WHERE WEEKDAY(trip_date)=0
-group by pickup3_area, dropoff3_area
-ORDER BY pickup3_area, dropoff3_area</string>
+ORDER BY weight desc, pickup3_area, dropoff3_area
+LIMIT 10</string>
+		<string>select day(trip_date) tanggal,
+CASE 
+	WHEN pickup&gt;'00:00:00' and pickup&lt;'06:00:00' THEN 'DiniHari'
+	WHEN pickup&gt;'06:00:00' and pickup&lt;'10:00:00' THEN 'Pagi'
+	WHEN pickup&gt;'10:00:00' and pickup&lt;'14:00:00' THEN 'Siang'
+	WHEN pickup&gt;'14:00:00' and pickup&lt;'18:00:00' THEN 'Sore'
+	WHEN pickup&gt;'18:00:00' and pickup&lt;'24:00:00' THEN 'Malam'
+	
+END AS jam, count(*)
+FROM trip_12
+GROUP BY tanggal, jam
+ORDER BY tanggal</string>
 	</array>
 	<key>rdbms_type</key>
 	<string>mysql</string>

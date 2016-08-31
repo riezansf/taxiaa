@@ -36,8 +36,8 @@ var originMarkers = new L.FeatureGroup();
 var destinationMarkers = new L.FeatureGroup();
 var odLine = new L.FeatureGroup();
 
-var originClusterMarkers = new L.FeatureGroup(); 
-var destinationClusterMarkers = new L.FeatureGroup(); 
+//var originClusterMarkers = new L.FeatureGroup(); 
+//var destinationClusterMarkers = new L.FeatureGroup(); 
     
 var bandungCentroid=[-6.908744, 107.669810];
 //var bandungCentroid=[-6.914744, 107.609810];
@@ -440,7 +440,14 @@ $(document).ready(function() {
                 });
                 $("#fOdLine").change(function(){
                     if(this.checked) { map.addLayer(odLine); }else{ map.removeLayer(odLine); }
-                });         
+                });
+            
+                $("#fAreaCentroidO").change(function(){
+                    if(this.checked) { map.addLayer(areaCentroidO); }else{ map.removeLayer(areaCentroidO); }
+                });  
+                $("#fAreaCentroidD").change(function(){
+                    if(this.checked) { map.addLayer(areaCentroidO); }else{ map.removeLayer(areaCentroidO); }
+                });  
             }
         );  
     });
@@ -466,7 +473,6 @@ $(document).ready(function() {
                         weight : parseFloat(data[i]["weight"])
                     });
                 } 
-             
              
                 var old_time = new Date();
                 //== Graph Clustering - jLouvain
@@ -547,7 +553,6 @@ $(document).ready(function() {
                    }
                 }
                 //map.addLayer(areaToAreaLine);
-             
         
                 //==== Print graph statistic
                 getGraphStatistic("getODRank");
@@ -561,8 +566,7 @@ $(document).ready(function() {
             }
         );
     }  
-    
-    
+
     function getGraphStatistic(statistic){
         $.getJSON("tools_preprocess_get.php",{
                 index : INDEX,
@@ -720,7 +724,10 @@ $(document).ready(function() {
                     <input type="checkbox" id="fOriginMarkers" value="originMarkers" > Origin Marker <br>
                     <input type="checkbox" id="fDestinationMarkers" value="destinationMarkers" > Destination Marker <br>
                     <input type="checkbox" id="fOdLine" value="fOdLine" > Line <br>
+                    <input type="checkbox" id="fAreaCentroidO" value="" checked> Area Centroid Origin<br>
+                    <input type="checkbox" id="fAreaCentroidD" value="" checked> Area Centroid Destination<br>
                 </div>
+                
             
 <!--                <div id="toggle">Toggle</div>-->
             </div>

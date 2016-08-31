@@ -14,7 +14,6 @@
             $dropoff_long="dropoff".$INDEX."_long";
         }
         
-        
         function getDay(){
             $dayTrim="";
             if(isset($_GET['day']) && $_GET['day']!=''){
