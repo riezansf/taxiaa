@@ -1,5 +1,5 @@
 <?php
-    $server="127.0.0.1"; $username="root"; $password="root"; $database="taxiaa";
+    $server="127.0.0.1"; $username="root"; $password=""; $database="taxiaa";
     mysql_connect($server,$username,$password) or die("Koneksi gagal");
     mysql_select_db($database) or die("DB not available");
 
@@ -59,13 +59,12 @@
             return $wherePeriod." ".$whereArea." ".$whereWeekday." ".$whereDay; 
         }
         
-        if(isset($_GET['startPeriod']) && isset($_GET['endPeriod'])){
+        if(isset($_GET['startPeriod']) && isset($_GET['endPeriod']) && isset($_GET['weekday'])){
             $start=explode("-",$_GET['startPeriod'])[2];
             $end=explode("-",$_GET['endPeriod'])[2];
             $filename=$start."-".$end."_".str_replace(',', '', $_GET['weekday'])."_".getDay();  
         }
        
-        
         switch($_GET['req']){
             case "getTrip" : 
                 $query="
@@ -140,7 +139,7 @@
                 echo @json_encode($filename);
                 break;
             
-            //Graph statistic   
+            //=========== Graph statistic   
             case "getODRank" : 
                 $query="
                     select $pickup_area, $dropoff_area, count(*) weight 
@@ -159,13 +158,13 @@
                 $result=mysql_query($query);
                 $i=0;
                 
-                $myfile = fopen("data/getODRank".$filename.".csv", "w") or die("Unable to open file!");
-                fwrite($myfile, "No,Origin,Destination,Trip Count\n");
+                //$myfile = fopen("data/getODRank".$filename.".csv", "w") or die("Unable to open file!");
+                //fwrite($myfile, "No,Origin,Destination,Trip Count\n");
                 while ($data=mysql_fetch_array($result)){ 
-                    fwrite($myfile, ($i+1).",".$data[0].",".$data[1].",".$data[2]."\n");
+                    //fwrite($myfile, ($i+1).",".$data[0].",".$data[1].",".$data[2]."\n");
                     $trip[$i]=$data; $i++; 
                 }
-                fclose($myfile);
+                //fclose($myfile);
                 echo @json_encode($trip);
                 break; 
             break; 
@@ -186,13 +185,13 @@
                 ";
                 $result=mysql_query($query);
                 $i=0;
-                $myfile = fopen("data/getWeightOut".$filename.".csv", "w") or die("Unable to open file!");
-                fwrite($myfile, "No,Origin,Trip Count\n");
+                //$myfile = fopen("data/getWeightOut".$filename.".csv", "w") or die("Unable to open file!");
+                //fwrite($myfile, "No,Origin,Trip Count\n");
                 while ($data=mysql_fetch_array($result)){ 
-                    fwrite($myfile, ($i+1).",".$data[0].",".$data[1]."\n");
+                    //fwrite($myfile, ($i+1).",".$data[0].",".$data[1]."\n");
                     $trip[$i]=$data; $i++; 
                 }
-                fclose($myfile);
+                //fclose($myfile);
                 echo @json_encode($trip);
             break;   
                 
@@ -321,46 +320,7 @@
                 //fclose($myfile);
                 echo @json_encode($trip);
             break;     
-                
-             
-                
-            //=============== JAMIL =======================================================
-            case "getTripForArimaData" : 
-                $timePeriod=explode("-",$_GET['timePeriod']);
-                $wherePeriod=(isset($_GET['datePeriod']) && isset($_GET['timePeriod']))? 
-                    " AND trip_date <= STR_TO_DATE('".$_GET['datePeriod']." ".$timePeriod[0]."', '%Y-%m-%d %H:%i') AND trip_date >= STR_TO_DATE('2015-12-07 00:00', '%Y-%m-%d %H:%i')" : "" ;
-                $result=mysql_query("
-                    SELECT * FROM trip_12 
-                    WHERE 
-                        pickup2_grid100!='' AND pickup2_grid100 IS NOT NULL
-                    ".$wherePeriod."
-                    ORDER BY trip_date,pickup ASC
-                ");
-                $i=0;
-                while ($data=mysql_fetch_array($result)){
-                    $trip[$i]=$data;
-                    $i++;
-                }
-                echo @json_encode($trip);
-                break;   
-                
-            case "getArimaData" :
-                $timePeriod=explode("-",$_GET['timePeriod']);
-                
-                $result=mysql_query("
-                    SELECT grid,count 
-                    FROM arimaData 
-                    where period='2015-12-07 12:00-2015-12-07 15:00' 
-                    ORDER BY grid,period ASC
-                ");
-                $i=0;
-                
-                while ($data=mysql_fetch_array($result)){
-                    $trip[$i]=$data;
-                    $i++;
-                }
-                echo @json_encode($trip);
-                break;    
+                   
             default : break;
         }
     }

@@ -38,7 +38,12 @@ var bandungCentroid=[-6.918744, 107.669810];
 //var bandungCentroid=[-6.914744, 107.609810];
 var bandungBounds=[[-6.839, 107.547], [-6.967, 107.738]]; //BANDUNG ONLY
 var bandungBoundsExtend=[[-6.784, 107.493], [-7.057, 107.827]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
-var bandungBoundsCimahi=[[-6.839, 107.498], [-6.967,107.547]]; //CIMAHI, LEMBANG, CILEUNYI, RANCAEKEK, SOREANG 
+
+var bandungBoundsCimahi=[[-6.839, 107.508], [-6.967,107.547]]; //CIMAHI
+var bandungBoundsPadalarang=[[-6.839, 107.458], [-6.967,107.508]]; //PADALARANG
+var bandungBoundsLembang=[[-6.799, 107.547], [-6.839,107.738]]; //LEMBANG
+var bandungBoundsCileunyi=[[-6.839, 107.738], [-6.977, 107.838]]; //CILEUNYI, RANCAEKEK, JATINANGOR
+var bandungBoundsSoreang=[[-6.839, 107.738], [-6.977, 107.838]]; //CILEUNYI, RANCAEKEK, JATINANGOR
     
 // Variable for map
 var gridSize=0.001; //aprox 109,5m
@@ -407,6 +412,9 @@ $(document).ready(function() {
 
     //todo include in map point to grid, check if luar bandung then do this : 
     L.rectangle(bandungBoundsCimahi, {weight:0.5, color:'red',fillColor:'red',fillOpacity:0.1}).bindLabel("").addTo(map);
+    L.rectangle(bandungBoundsPadalarang, {weight:0.5, color:'red',fillColor:'red',fillOpacity:0.1}).bindLabel("").addTo(map);
+    L.rectangle(bandungBoundsLembang, {weight:0.5, color:'red',fillColor:'red',fillOpacity:0.1}).bindLabel("").addTo(map);
+    L.rectangle(bandungBoundsCileunyi, {weight:0.5, color:'red',fillColor:'red',fillOpacity:0.1}).bindLabel("").addTo(map);
     
     
     //get areaname list
