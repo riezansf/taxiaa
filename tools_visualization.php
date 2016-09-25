@@ -20,9 +20,17 @@
     <script src="util.js"></script> 
     <script src="randomColor.js"></script> 
     
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.css">
+    
     <link rel="stylesheet" href="jquery/jquery-ui.css" />
     <link rel="stylesheet" href="leaflet/leaflet.css" />
     <link rel="stylesheet" href="tools_style.css" />
+    <style type="text/css">
+        #mynetwork {
+            background-color: black;
+        }
+    </style>
 <script>
 //lat = atas-bawah Y, makin kecil makin ke atas (utara)
 //long = kiri-kanan X, makin kecil makin ke kiri (barat)
@@ -82,11 +90,10 @@ var node_data_o = []; // any type of string can be used as id
 var node_data_d = [];
 var edge_data = [];
 
-    
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
 
-var styleGrid={weight:0.5, color:'grey',fillColor:'grey',fillOpacity:0.01};
+var styleGrid={weight:0, color:'grey',fillColor:'grey',fillOpacity:0};
 var styleSelectedGrid={weight:0.5, color:'red', fillColor:'red', fillOpacity:0.8};
 function getStyleGrid(color){ return { weight:0.5, color:color, fillColor:color, fillOpacity:0.3};}    
     
@@ -360,7 +367,10 @@ function getCheckedDay(){
     return checkedDay;
 }  
     
+var graphNodes=[]; var graphEdges=[];
+    
 $(document).ready(function() { 
+    
     $(".date").datepicker({ dateFormat: 'yy-mm-dd', minDate : '2015-12-1', maxDate : '2015-12-31'});
     $( "#slider-range" ).slider({ min: 0, max: 10, values: [ 1 ],
       slide: function( event, ui ) {
@@ -408,6 +418,7 @@ $(document).ready(function() {
 //                }
                 
                 areaGridId[data[i].area_name.replace(/ /g,'')]=data[i].id;  // key = area_name , value gridId's     
+                
             }
             dataGridArea=data; // key : index, value = object{area_name, gridId}
             
@@ -436,7 +447,6 @@ $(document).ready(function() {
                 getEdge();
 
                 //Filter
-                $("#footer").show();
                 $("#fOriginMarkers").change(function(){
                     if(this.checked) { map.addLayer(originMarkers); }else{ map.removeLayer(originMarkers); }
                 });
@@ -454,7 +464,10 @@ $(document).ready(function() {
                 });  
                 $("#fGridRectangle").change(function(){
                     if(this.checked) { map.addLayer(gridRectangle); }else{ map.removeLayer(gridRectangle); }
-                });  
+                }); 
+                $("#filterToggle").click(function(){ $("#footer").toggle();}); 
+                $("#graphToggle").click(function(){ $("#mynetwork").toggle(); $("#filterLoadData").toggle()}); 
+                
             }
         );  
     });
@@ -479,7 +492,11 @@ $(document).ready(function() {
                         //weight : Math.ceil(parseFloat(data[i]["weight"]) / getCheckedWeekday().length)
                         weight : parseFloat(data[i]["weight"])
                     });
+                    
+                    //GRAPH VIZ
+                    graphEdges.push({from: data[i][pickup_area].replace(/ /g,''), to: data[i][dropoff_area].replace(/ /g,''), arrows:'to', width:data[i]["weight"]} )
                 } 
+             
              
                 //== Graph Clustering - jLouvain
                 var old_time = new Date();
@@ -494,8 +511,9 @@ $(document).ready(function() {
                 for (var areaName in result){
                     if (typeof result[areaName] !== 'function') {
                         if(result[areaName]>generatedCluster){ generatedCluster=result[areaName]}
-                    }
+                    } 
                     
+                    graphNodes.push({id: areaName, label: areaName, group: result[areaName],size:25})
                 }
                 console.log("Generated cluster "+(generatedCluster+1));
                 console.log("Node "+node.length);
@@ -506,7 +524,7 @@ $(document).ready(function() {
              
                 //Display Clustering Reselut, coloring active grid & draw arrow line
                 for(var i=0;i<edge_data.length;i++){
-                   if(edge_data[i].source!=edge_data[i].target && edge_data[i].weight>1){
+                    if(edge_data[i].source!=edge_data[i].target && edge_data[i].weight>1){
                         //coloring active grid, with cluster color
                         if(typeof areaGridId[edge_data[i].source]!="undefined" && typeof areaGridId[edge_data[i].target]!="undefined"){                
                             //console.log(edge_data[i].source+"("+result[edge_data[i].source]+"),"+edge_data[i].target+"("+result[edge_data[i].target]+"),"+edge_data[i].weight);
@@ -522,6 +540,7 @@ $(document).ready(function() {
                             for(var j=0;j<grid.length;j++){          
                                 gridId[grid[j]].rectangle.setStyle({ weight:0.5, color:markerColors[result[edge_data[i].target]], fillColor:markerColors[result[edge_data[i].target]], fillOpacity:0.8}).bindLabel(result[edge_data[i].target]+" "+edge_data[i].target);
                             }
+                            
                             
                             //Polylines with Arrow
                             var arrowPolyline = L.Polyline.extend({
@@ -569,6 +588,20 @@ $(document).ready(function() {
                 getGraphStatistic("getDegreeIn");
                 getGraphStatistic("getKmOut");
                 getGraphStatistic("getKmIn");
+             
+                // create a network
+                //console.log(graphNodes);
+                //console.log(graphEdges);
+                var container = document.getElementById('mynetwork');
+                var data = { nodes: graphNodes, edges: graphEdges };
+                var options = {
+                    nodes: {
+                        shape: 'dot',
+                        font: { size: 32, color: '#ffffff'},
+                        borderWidth: 2
+                    }
+                };
+                network = new vis.Network(container, data, options);
                 
             }
         );
@@ -691,6 +724,8 @@ $(document).ready(function() {
                     <tr>
                         <td colspan="4">
                             <input type="button" id="loadData" value="Load Data">
+                            <input type="button" id="filterToggle" value="Toggle filter">
+                            <input type="button" id="graphToggle" value="Toggle graph">
                         </td>
                     </tr>
                     
@@ -701,11 +736,12 @@ $(document).ready(function() {
                 <b>Visualize Graph Cluster</b><br>
                  <table>
                     <tr>
-                        <td colspan="2"><input type="button" id="proccess" value="Process"></td>
+                        <td colspan="2">
+<!--                            <input type="button" id="proccess" value="Process">-->
+                        </td>
                     </tr>
                     <tr>
                         <td colspan="2" id="filterCluster">
-                            Show/Hide Cluster<br>
                             <input type="checkbox" name="cluster" value="" checked="true"> | Cluster 1 | Area,Area,Area<br><br><br>
                         </td>
                     </tr>
@@ -724,9 +760,9 @@ $(document).ready(function() {
         <div class="content">
             <div id="map"> </div>
             
+            
             <div id="footer" hidden>
-                <b>Filter</b><br>
-                
+                <div id="mynetwork" hidden></div>
                 <div id="filterLoadData">
                     <input type="checkbox" id="fOriginMarkers" value="originMarkers" > Origin Marker <br>
                     <input type="checkbox" id="fDestinationMarkers" value="destinationMarkers" > Destination Marker <br>
@@ -736,8 +772,8 @@ $(document).ready(function() {
                     <input type="checkbox" id="fGridRectangle" value="" checked> Grid <br>
                 </div>
                 
-            
-<!--                <div id="toggle">Toggle</div>-->
+                
+
             </div>
         </div>  
     </div>
