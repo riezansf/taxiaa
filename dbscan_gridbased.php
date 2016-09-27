@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta charset=utf-8 />
-    <title>ARIMA</title>
+    <title>DBSCAN</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' /> 
     <script src="jquery/jquery-3.0.0.min.js"></script> 
     <script src="jquery/jquery-ui.min.js"></script>
@@ -40,6 +40,17 @@ var grid=[];
     
 var pointMappedToGridO=0;
 var pointMappedToGridD=0;
+    
+    //For get data location 1 / 2 / 3
+var INDEX=3;
+var pickup_lat="pickup"+INDEX+"_lat";
+var pickup_long="pickup"+INDEX+"_long";
+var dropoff_lat="dropoff"+INDEX+"_lat";
+var dropoff_long="dropoff"+INDEX+"_long"; 
+var pickup_grid100="pickup"+INDEX+"_grid100";
+var dropoff_grid100="dropoff"+INDEX+"_grid100";
+var pickup_area="pickup"+INDEX+"_area";
+var dropoff_area="dropoff"+INDEX+"_area";
     
 function buildMap(bandungCentroid){
     var start = new Date();
@@ -300,9 +311,10 @@ $(document).ready(function() {
     drawGridRectangle(bandungBounds,gridSize,gridWeight,gridColor,gridFillOpacity);
     
     $.getJSON("tools_preprocess_get.php",{
+                index : INDEX,
                 req : "getTrip",
-                startPeriod : "2015-12-8",
-                endPeriod : "2015-12-9"
+                startPeriod : "2015-12-25",
+                endPeriod : "2015-12-31"
             },
             function(data, status){
                 $.each(data, function (index, value) { data[index]=value; });

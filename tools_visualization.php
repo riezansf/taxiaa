@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta charset=utf-8 />
-    <title>Visualization - Frequent O-D Flow</title>
+    <title>Visualization Frequent O-D Flow</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' /> 
     <script src="jquery/jquery-3.0.0.min.js"></script> 
     <script src="jquery/jquery-ui.min.js"></script>
@@ -513,7 +513,7 @@ $(document).ready(function() {
                         if(result[areaName]>generatedCluster){ generatedCluster=result[areaName]}
                     } 
                     
-                    graphNodes.push({id: areaName, label: areaName, group: result[areaName],size:25})
+                    graphNodes.push({id: areaName, label: areaName, group: result[areaName],size:25,mass:5})
                 }
                 console.log("Generated cluster "+(generatedCluster+1));
                 console.log("Node "+node.length);
@@ -597,7 +597,7 @@ $(document).ready(function() {
                 var options = {
                     nodes: {
                         shape: 'dot',
-                        font: { size: 32, color: '#ffffff'},
+                        font: { size: 36, color: '#ffffff'},
                         borderWidth: 2
                     }
                 };
